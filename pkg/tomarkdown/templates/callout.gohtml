@@ -1,17 +1,1 @@
-{{if eq .Extra.ExtendedSyntaxTarget "hugo" -}}
-{{"{{% callout emoji=\""}}{{.Callout.Icon.Emoji}}{{"\" %}}"}}
-{{rich2md .Callout.Text}}
-{{"{{% /callout %}}"}}
-{{end -}}
-
-{{if eq .Extra.ExtendedSyntaxTarget "hexo" -}}
-{{"{% note "}}{{.Callout.Icon.Emoji}}{{" %}"}}
-{{rich2md .Callout.Text}}
-{{"{% endnote %}"}}
-{{end -}}
-
-{{if eq .Extra.ExtendedSyntaxTarget "vuepress" -}}
-{{"::: tip "}}{{.Callout.Icon.Emoji}}
-{{rich2md .Callout.Text}}
-{{":::"}}
-{{end -}}
+{{"{{< callout emoji=\""}}{{.Extra.Emoji}}{{"\" text=\""}} {{.Extra.Text}}{{"\" >}}"}}
