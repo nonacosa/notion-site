@@ -1,0 +1,8 @@
+
+{{- if eq .Extra.Plat ""}}
+    {{"{{< iframe \""}}{{.Extra.Url}}{{"\" >}}"}}{{"\n"}}
+{{end}}
+
+{{- if eq .Extra.Plat "bilibili"}}
+    {{"{{< bilibili "}}{{.Extra.Url}}{{" >}}"}}
+{{end}}
