@@ -15,6 +15,7 @@ import (
 )
 
 func Run(config Config) error {
+	fmt.Printf("init save path %s", config.Markdown.PostSavePath)
 	if err := os.MkdirAll(config.Markdown.PostSavePath, 0755); err != nil {
 		return fmt.Errorf("couldn't create content folder: %s", err)
 	}
