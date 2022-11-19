@@ -1,0 +1,1 @@
+Build an efficient blog or content Sites based on Notion + Hugo
