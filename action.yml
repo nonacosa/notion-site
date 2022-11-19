@@ -1,5 +1,5 @@
 name: notion-site
-author: saltbo
+author: pkwenda
 description: Convert notion content to markdown for any static blog.
 branding:
   icon: inbox
