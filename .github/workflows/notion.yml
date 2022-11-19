@@ -29,7 +29,6 @@ jobs:
         # better look to the Markdown.
         uses: creyD/prettier_action@v3.1
         with:
-          prettier_options: --write ./example/posts/**/*.md
           commit_message: 'notion-site: update articles (auto)'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
