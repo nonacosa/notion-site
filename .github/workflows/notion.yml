@@ -1,18 +1,6 @@
 name: build
 on:
-  # schedule:
-  #   - cron:  '*/10 * * * *' # 15min
-  # pull_request:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-  pull_request:
-  workflow_run:
-    workflows: ["wakatime"]
-    branches: [master]
-    types:
-      - completed
 jobs:
   sync:
     name: Sync from notion
