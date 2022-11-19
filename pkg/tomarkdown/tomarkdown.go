@@ -262,7 +262,7 @@ func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag
 	funcs["deref"] = func(i *bool) bool { return *i }
 	funcs["rich2md"] = ConvertRichText
 
-	t := template.New(fmt.Sprintf("%s.gohtml", bType)).Funcs(funcs)
+	t := template.New(fmt.Sprintf("%s.ntpl", bType)).Funcs(funcs)
 	tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", bType))
 	if bType == notion.BlockTypeVideo {
 		print(1)
