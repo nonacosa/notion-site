@@ -8,3 +8,4 @@ web/
 .env
 .coverprofile
 notion-site.yaml
+config.yaml

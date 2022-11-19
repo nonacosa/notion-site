@@ -110,8 +110,10 @@ func (tm *ToMarkdown) shouldSkipRender(bType notion.BlockType) bool {
 }
 
 func (tm *ToMarkdown) GenerateTo(blocks []notion.Block, writer io.Writer, fm *FrontMatter) error {
-	if err := tm.GenFrontMatter(writer, fm); err != nil {
-		return err
+	if tm.FrontMatter["IsSetting"] != true {
+		if err := tm.GenFrontMatter(writer, fm); err != nil {
+			return err
+		}
 	}
 
 	if err := tm.GenContentBlocks(blocks, 0); err != nil {
@@ -186,6 +188,7 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 		if tm.shouldSkipRender(block.Type) {
 			continue
 		}
+
 		mdb := MdBlock{
 			Block: block,
 			Depth: depth,
@@ -197,6 +200,17 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			sameBlockIdx = 0
 		}
 		mdb.Extra["SameBlockIdx"] = sameBlockIdx
+
+		if tm.FrontMatter["IsSetting"] == true {
+			if block.Type == notion.BlockTypeCode {
+				if err := tm.GenBlock("setting", mdb, false, true); err != nil {
+					return err
+				}
+				lastBlockType = block.Type
+				fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, block.Type, block.ID))
+				continue
+			}
+		}
 
 		var err error
 		switch block.Type {
@@ -245,7 +259,7 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			addMoreTag = tm.ContentBuffer.Len() > 60
 			hasMoreTag = true
 		}
-		if err := tm.GenBlock(block.Type, mdb, addMoreTag); err != nil {
+		if err := tm.GenBlock(block.Type, mdb, addMoreTag, false); err != nil {
 			return err
 		}
 		lastBlockType = block.Type
@@ -257,16 +271,13 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 }
 
 // 模板
-func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag bool) error {
+func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag bool, skip bool) error {
 	funcs := sprig.TxtFuncMap()
 	funcs["deref"] = func(i *bool) bool { return *i }
 	funcs["rich2md"] = ConvertRichText
 
 	t := template.New(fmt.Sprintf("%s.ntpl", bType)).Funcs(funcs)
 	tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", bType))
-	if bType == notion.BlockTypeVideo {
-		print(1)
-	}
 	if err != nil {
 		return err
 	}
@@ -275,13 +286,15 @@ func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag
 		return err
 	}
 
-	if addMoreTag {
-		tm.ContentBuffer.WriteString("<!--more-->")
-	}
+	if !skip {
+		if addMoreTag {
+			tm.ContentBuffer.WriteString("<!--more-->")
+		}
 
-	if block.HasChildren {
-		block.Depth++
-		return tm.GenContentBlocks(getChildrenBlocks(block), block.Depth)
+		if block.HasChildren {
+			block.Depth++
+			return tm.GenContentBlocks(getChildrenBlocks(block), block.Depth)
+		}
 	}
 
 	return nil

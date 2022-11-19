@@ -1,0 +1,1 @@
+{{range .Code.Text}}{{.Text.Content}}{{end}}

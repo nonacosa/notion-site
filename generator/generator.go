@@ -73,14 +73,18 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 	//if page.Properties.(notion.DatabasePageProperties)["Date"].Date != nil {
 	//	date = page.Properties.(notion.DatabasePageProperties)["Date"].Date.Start
 	//}
-
-	f, err := os.Create(filepath.Join(config.PostSavePath, generateArticleFilename(pageName, page.CreatedTime, config)))
+	// Generate markdown content to the file
+	tm := tomarkdown.New()
+	var f *os.File
+	var err error
+	f, err = preCheck(page, config, tm)
+	if f == nil {
+		f, err = os.Create(filepath.Join(config.PostSavePath, generateArticleFilename(pageName, page.CreatedTime, config)))
+	}
 	if err != nil {
 		return fmt.Errorf("error create file: %s", err)
 	}
 
-	// Generate markdown content to the file
-	tm := tomarkdown.New()
 	tm.ImgSavePath = filepath.Join(config.ImageSavePath, pageName)
 	tm.ImgVisitPath = filepath.Join(config.ImagePublicLink, url.PathEscape(pageName))
 	tm.ContentTemplate = config.Template
@@ -105,6 +109,21 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 	return tm.GenerateTo(blocks, f, fm)
 }
 
+func preCheck(page notion.Page, config Markdown, tm *tomarkdown.ToMarkdown) (*os.File, error) {
+	var savePath = config.PostSavePath
+	var titleRich = page.Properties.(notion.DatabasePageProperties)["Title"].RichText
+	var position = page.Properties.(notion.DatabasePageProperties)["Position"].Select
+	if position != nil {
+		tm.FrontMatter["Position"] = position.Name
+		savePath = position.Name
+	}
+	if len(titleRich) > 0 && tomarkdown.ConvertRichText(titleRich) == "config.yaml" {
+		tm.FrontMatter["IsSetting"] = true
+		return os.Create(filepath.Join(savePath, generateSettingFilename(tomarkdown.ConvertRichText(titleRich), page.CreatedTime, config)))
+	}
+	return nil, nil
+}
+
 func generateArticleFilename(title string, date time.Time, config Markdown) string {
 	escapedTitle := strings.ReplaceAll(
 		strings.ToValidUTF8(
@@ -120,6 +139,21 @@ func generateArticleFilename(title string, date time.Time, config Markdown) stri
 	}
 
 	return escapedFilename
+}
+
+func generateSettingFilename(title string, date time.Time, config Markdown) string {
+	name := strings.ReplaceAll(
+		strings.ToValidUTF8(
+			strings.ToLower(title),
+			"",
+		),
+		" ", "-",
+	)
+
+	if config.GroupByMonth {
+		return filepath.Join(date.Format("2006-01-02"), name)
+	}
+	return name
 }
 
 // todo pref
