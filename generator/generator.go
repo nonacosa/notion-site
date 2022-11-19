@@ -30,7 +30,7 @@ func Run(config Config) error {
 	// fetch page children
 	changed := 0 // number of article status changed
 	for i, page := range q.Results {
-		fmt.Printf("-- Article [%d/%d] --\n", i+1, len(q.Results))
+		fmt.Printf("-- Article [%d/%d] -- %s \n", i+1, len(q.Results), page.URL)
 
 		// Get page blocks tree
 		blocks, err := queryBlockChildren(client, page.ID)
@@ -41,7 +41,7 @@ func Run(config Config) error {
 		fmt.Println("✔ Getting blocks tree: Completed")
 
 		// Generate content to file
-		if err := generate(page, blocks, config.Markdown); err != nil {
+		if err := generate(client, page, blocks, config.Markdown); err != nil {
 			fmt.Println("❌ Generating blog post:", err)
 			continue
 		}
@@ -51,6 +51,7 @@ func Run(config Config) error {
 		if changeStatus(client, page, config.Notion) {
 			changed++
 		}
+
 	}
 
 	// Set GITHUB_ACTIONS info variables
@@ -62,9 +63,16 @@ func Run(config Config) error {
 	return nil
 }
 
-func generate(page notion.Page, blocks []notion.Block, config Markdown) error {
+func generate(client *notion.Client, page notion.Page, blocks []notion.Block, config Markdown) error {
 	// Create file
 	pageName := tomarkdown.ConvertRichText(page.Properties.(notion.DatabasePageProperties)["Name"].Title)
+	//title := tomarkdown.ConvertRichText(page.Properties.(notion.DatabasePageProperties)["Title"].RichText)
+	//status := page.Properties.(notion.DatabasePageProperties)["Status"].Select.Name
+	//var date notion.DateTime
+	//if page.Properties.(notion.DatabasePageProperties)["Date"].Date != nil {
+	//	date = page.Properties.(notion.DatabasePageProperties)["Date"].Date.Start
+	//}
+
 	f, err := os.Create(filepath.Join(config.PostSavePath, generateArticleFilename(pageName, page.CreatedTime, config)))
 	if err != nil {
 		return fmt.Errorf("error create file: %s", err)
@@ -75,12 +83,25 @@ func generate(page notion.Page, blocks []notion.Block, config Markdown) error {
 	tm.ImgSavePath = filepath.Join(config.ImageSavePath, pageName)
 	tm.ImgVisitPath = filepath.Join(config.ImagePublicLink, url.PathEscape(pageName))
 	tm.ContentTemplate = config.Template
+	// todo edit frontMatter
 	tm.WithFrontMatter(page)
 	if config.ShortcodeSyntax != "" {
 		tm.EnableExtendedSyntax(config.ShortcodeSyntax)
 	}
 
-	return tm.GenerateTo(blocks, f)
+	//parentId := strings.ReplaceAll(page.Parent.DatabaseID, "-", "")
+
+	var fm = &tomarkdown.FrontMatter{}
+
+	blocks, _ = syncMentionBlocks(client, blocks)
+
+	// save last update time
+	//websiteItemMeta.LastUpdate = page.LastEditedTime
+	//websiteItemJson, _ := json.Marshal(websiteItemMeta)
+
+	//storage.Save(fmt.Sprintf("%s_%s", parentId, page.ID), string(websiteItemJson))
+
+	return tm.GenerateTo(blocks, f, fm)
 }
 
 func generateArticleFilename(title string, date time.Time, config Markdown) string {
@@ -98,4 +119,33 @@ func generateArticleFilename(title string, date time.Time, config Markdown) stri
 	}
 
 	return escapedFilename
+}
+
+// todo pref
+func syncMentionBlocks(client *notion.Client, blocks []notion.Block) (retBlocks []notion.Block, err error) {
+
+	for _, block := range blocks {
+		switch block.Type {
+		// todo image
+		case notion.BlockTypeParagraph:
+			richTexts := block.Paragraph.Text
+			for _, rich := range richTexts {
+				// todo mention .type = user
+				if rich.Type == "mention" {
+					// todo mention has many types !!! how to work ?
+					//if rich.Mention.Type == "page" {
+					//	pageId := rich.Mention.Page.ID
+					//	return queryBlockChildren(client, pageId)
+					//}
+					//if rich.Mention.Type == "user" {
+					//	_ = rich.Mention.User.ID
+					//}
+				}
+			}
+		default:
+			{
+			}
+		}
+	}
+	return blocks, nil
 }

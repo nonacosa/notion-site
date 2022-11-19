@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"io"
 	"net/http"
 	"net/url"
@@ -42,6 +43,7 @@ type MdBlock struct {
 }
 
 type ToMarkdown struct {
+	// todo
 	FrontMatter     map[string]interface{}
 	ContentBuffer   *bytes.Buffer
 	ImgSavePath     string
@@ -49,6 +51,28 @@ type ToMarkdown struct {
 	ContentTemplate string
 
 	extra map[string]interface{}
+}
+
+type FrontMatter struct {
+	//Image         interface{}   `yaml:",flow"`
+	Title         interface{}   `yaml:",flow"`
+	Status        interface{}   `yaml:",flow"`
+	Position      interface{}   `yaml:",flow"`
+	Categories    []interface{} `yaml:",flow"`
+	Tags          []interface{} `yaml:",flow"`
+	Keywords      []interface{} `yaml:",flow"`
+	CreateAt      interface{}   `yaml:",flow"`
+	Author        interface{}   `yaml:",flow"`
+	Date          interface{}   `yaml:",flow"`
+	Lastmod       interface{}   `yaml:",flow"`
+	Description   interface{}   `yaml:",flow"`
+	Draft         interface{}   `yaml:",flow"`
+	ExpiryDate    interface{}   `yaml:",flow"`
+	PublishDate   interface{}   `yaml:",flow"`
+	Show_comments interface{}   `yaml:",flow"`
+	//Calculate Chinese word count accurately. Default is true
+	IsCJKLanguage interface{} `yaml:",flow"`
+	Slug          interface{} `yaml:",flow"`
 }
 
 func New() *ToMarkdown {
@@ -60,6 +84,7 @@ func New() *ToMarkdown {
 }
 
 func (tm *ToMarkdown) WithFrontMatter(page notion.Page) {
+	// todo image cover to image frontMatter
 	tm.injectFrontMatterCover(page.Cover)
 	pageProps := page.Properties.(notion.DatabasePageProperties)
 	for fmKey, property := range pageProps {
@@ -84,8 +109,8 @@ func (tm *ToMarkdown) shouldSkipRender(bType notion.BlockType) bool {
 	return !tm.ExtendedSyntaxEnabled() && blockTypeInExtendedSyntaxBlocks(bType)
 }
 
-func (tm *ToMarkdown) GenerateTo(blocks []notion.Block, writer io.Writer) error {
-	if err := tm.GenFrontMatter(writer); err != nil {
+func (tm *ToMarkdown) GenerateTo(blocks []notion.Block, writer io.Writer, fm *FrontMatter) error {
+	if err := tm.GenFrontMatter(writer, fm); err != nil {
 		return err
 	}
 
@@ -105,17 +130,37 @@ func (tm *ToMarkdown) GenerateTo(blocks []notion.Block, writer io.Writer) error 
 	return err
 }
 
-func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
+func (tm *ToMarkdown) GenFrontMatter(writer io.Writer, fm *FrontMatter) error {
 	if len(tm.FrontMatter) == 0 {
 		return nil
 	}
+	var imageKey string
+	var imagePath string
 
 	nfm := make(map[string]interface{})
 	for key, value := range tm.FrontMatter {
 		nfm[strings.ToLower(key)] = value
+		// find image FrontMatter
+		switch v := value.(type) {
+		case string:
+			if strings.HasPrefix(v, "image|") {
+				imageKey = key
+				imageOriginPath := v[len("image|"):]
+				imagePath = tm.downloadFrontMatterImage(imageOriginPath)
+				fmt.Println(imagePath)
+			}
+		default:
+
+		}
+
+	}
+	if err := mapstructure.Decode(tm.FrontMatter, &fm); err != nil {
 	}
 
-	frontMatters, err := yaml.Marshal(nfm)
+	// chinese character statistics
+	//fm.IsCJKLanguage = true
+	frontMatters, err := yaml.Marshal(fm)
+
 	if err != nil {
 		return nil
 	}
@@ -123,7 +168,11 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
 	buffer := new(bytes.Buffer)
 	buffer.WriteString("---\n")
 	buffer.Write(frontMatters)
-	buffer.WriteString("---\n\n")
+	// todo write dynamic key image FrontMatter
+	if len(imagePath) > 0 {
+		buffer.WriteString(fmt.Sprintf("%s: \"%s\"\n", strings.ToLower(imageKey), imagePath))
+	}
+	buffer.WriteString("---\n")
 	_, err = io.Copy(writer, buffer)
 	return err
 }
@@ -131,7 +180,9 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
 func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 	var sameBlockIdx int
 	var lastBlockType notion.BlockType
-	for _, block := range blocks {
+
+	hasMoreTag := false
+	for index, block := range blocks {
 		if tm.shouldSkipRender(block.Type) {
 			continue
 		}
@@ -149,36 +200,83 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 
 		var err error
 		switch block.Type {
+		// todo image
 		case notion.BlockTypeImage:
 			err = tm.downloadImage(block.Image)
+		//todo hugo
 		case notion.BlockTypeBookmark:
 			err = tm.injectBookmarkInfo(block.Bookmark, &mdb.Extra)
+		case notion.BlockTypeVideo:
+			err = tm.injectVideoInfo(block.Video, &mdb.Extra)
+		case notion.BlockTypeFile:
+			err = tm.injectFileInfo(block.File, &mdb.Extra)
+		case notion.BlockTypeLinkPreview:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case notion.BlockTypeLinkToPage:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case notion.BlockTypeEmbed:
+			err = tm.injectEmbedInfo(block.Embed, &mdb.Extra)
+		case notion.BlockTypeCallout:
+			err = tm.injectCalloutInfo(block.Callout, &mdb.Extra)
+		case notion.BlockTypeBreadCrumb:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case notion.BlockTypeChildDatabase:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case notion.BlockTypeChildPage:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case notion.BlockTypePDF:
+			err = tm.injectFileInfo(block.PDF, &mdb.Extra)
+		case notion.BlockTypeSyncedBlock:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case notion.BlockTypeTemplate:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case notion.BlockTypeUnsupported:
+			err = tm.todo(block.Video, &mdb.Extra)
+		case "audio":
+			// todo go-notion not support
 		}
+
 		if err != nil {
 			return err
 		}
-
-		if err := tm.GenBlock(block.Type, mdb); err != nil {
+		addMoreTag := false
+		// todo configurable
+		if tm.ContentBuffer.Len() > 60 && !hasMoreTag {
+			addMoreTag = tm.ContentBuffer.Len() > 60
+			hasMoreTag = true
+		}
+		if err := tm.GenBlock(block.Type, mdb, addMoreTag); err != nil {
 			return err
 		}
 		lastBlockType = block.Type
+		fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, block.Type, block.ID))
+
 	}
 
 	return nil
 }
 
-func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock) error {
+// 模板
+func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag bool) error {
 	funcs := sprig.TxtFuncMap()
 	funcs["deref"] = func(i *bool) bool { return *i }
 	funcs["rich2md"] = ConvertRichText
+
 	t := template.New(fmt.Sprintf("%s.gohtml", bType)).Funcs(funcs)
 	tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", bType))
+	if bType == notion.BlockTypeVideo {
+		print(1)
+	}
 	if err != nil {
 		return err
 	}
 
 	if err := tpl.Execute(tm.ContentBuffer, block); err != nil {
 		return err
+	}
+
+	if addMoreTag {
+		tm.ContentBuffer.WriteString("<!--more-->")
 	}
 
 	if block.HasChildren {
@@ -200,8 +298,8 @@ func (tm *ToMarkdown) downloadImage(image *notion.FileBlock) error {
 		if err != nil {
 			return "", err
 		}
-
-		return filepath.Join(tm.ImgVisitPath, imgFilename), nil
+		var convertWinPath = strings.ReplaceAll(filepath.Join(tm.ImgVisitPath, imgFilename), "\\", "/")
+		return convertWinPath, nil
 	}
 
 	var err error
@@ -261,12 +359,64 @@ func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.Bookmark, extra *map[s
 	return nil
 }
 
+func (tm *ToMarkdown) injectVideoInfo(video *notion.FileBlock, extra *map[string]interface{}) error {
+	videoUrl := video.External.URL
+	var id, plat string
+	if strings.Contains(videoUrl, "youtube") {
+		plat = "youtube"
+		id = videoUrl[strings.Index(videoUrl, "?v=")+3:]
+	}
+	(*extra)["Plat"] = plat
+	(*extra)["Id"] = id
+	return nil
+}
+func (tm *ToMarkdown) injectEmbedInfo(embed *notion.Embed, extra *map[string]interface{}) error {
+	var plat = ""
+	url := embed.URL
+	if len(url) == 0 {
+		url = "http://www.baidu.com"
+	} else {
+		if strings.Contains(url, "bilibili.com") {
+			url = url[strings.Index(url, "video/")+6:]
+			plat = "bilibili"
+		}
+	}
+	(*extra)["Url"] = url
+	(*extra)["Plat"] = plat
+	return nil
+}
+
+// todo real file position
+func (tm *ToMarkdown) injectFileInfo(pdf *notion.FileBlock, extra *map[string]interface{}) error {
+	url := pdf.File.URL
+	(*extra)["Url"] = url
+	return nil
+}
+func (tm *ToMarkdown) injectCalloutInfo(callout *notion.Callout, extra *map[string]interface{}) error {
+	var text = ""
+	for _, richText := range callout.RichTextBlock.Text {
+		// todo if link ? or change highlight hugo
+		text += richText.Text.Content
+	}
+	(*extra)["Emoji"] = callout.Icon.Emoji
+	(*extra)["Text"] = text
+	return nil
+}
+
+func (tm *ToMarkdown) todo(video *notion.FileBlock, extra *map[string]interface{}) error {
+
+	return nil
+}
+
 // injectFrontMatter convert the prop to the front-matter
 func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePageProperty) {
 	var fmv interface{}
+
 	switch prop := property.Value().(type) {
 	case *notion.SelectOptions:
-		fmv = prop.Name
+		if prop != nil {
+			fmv = prop.Name
+		}
 	case []notion.SelectOptions:
 		opts := make([]string, 0)
 		for _, options := range prop {
@@ -274,17 +424,42 @@ func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePage
 		}
 		fmv = opts
 	case []notion.RichText:
-		fmv = ConvertRichText(prop)
+		if prop != nil {
+			fmv = ConvertRichText(prop)
+		}
 	case *time.Time:
-		fmv = prop.Format("2006-01-02T15:04:05+07:00")
+		if prop != nil {
+			fmv = prop.Format("2006-01-02T15:04:05+07:00")
+		}
 	case *notion.Date:
-		fmv = prop.Start.Format("2006-01-02T15:04:05+07:00")
+		if prop != nil {
+			fmv = prop.Start.Format("2006-01-02T15:04:05+07:00")
+		}
 	case *notion.User:
 		fmv = prop.Name
+	case *notion.File:
+		fmv = prop.File.URL
+	case []notion.File:
+		// 最后一个图片最为 banner
+		fmt.Printf("")
+		for i, image := range prop {
+			if i == len(prop)-1 {
+				// todo notion image download real path
+				fmv = fmt.Sprintf("image|%s", image.File.URL)
+			}
+		}
+	case *notion.FileExternal:
+		fmv = prop.URL
+	case *notion.FileFile:
+		fmv = prop.URL
+	case *notion.FileBlock:
+		fmv = prop.File.URL
 	case *string:
 		fmv = *prop
 	case *float64:
-		fmv = *prop
+		if prop != nil {
+			fmv = *prop
+		}
 	default:
 		fmt.Printf("Unsupport prop: %s - %T\n", prop, prop)
 	}
@@ -312,11 +487,27 @@ func (tm *ToMarkdown) injectFrontMatterCover(cover *notion.Cover) {
 	}
 
 	if image.Type == notion.FileTypeExternal {
-		tm.FrontMatter["cover"] = image.External.URL
+		tm.FrontMatter["image"] = image.External.URL
 	}
 	if image.Type == notion.FileTypeFile {
-		tm.FrontMatter["cover"] = image.File.URL
+		tm.FrontMatter["image"] = image.File.URL
 	}
+}
+
+func (tm *ToMarkdown) downloadFrontMatterImage(url string) string {
+
+	image := &notion.FileBlock{
+		Type: "external",
+		File: nil,
+		External: &notion.FileExternal{
+			URL: url,
+		},
+	}
+	if err := tm.downloadImage(image); err != nil {
+		return ""
+	}
+
+	return image.External.URL
 }
 
 func ConvertRichText(t []notion.RichText) string {
