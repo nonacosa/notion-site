@@ -1,6 +1,6 @@
 name: notion-site
 author: pkwenda
-description: Convert notion content to markdown for any static blog.
+description: Build an efficient blog or content Sites based on Notion and Hugo
 branding:
   icon: inbox
   color: black
