@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/bonaysoft/notion-md-gen/generator"
+	"github.com/pkwenda/notion-site/generator"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "notion-md-gen",
+	Use:   "notion-site",
 	Short: "A markdown generator for notion",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
@@ -44,7 +44,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is notion-md-gen.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is notion-site.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -54,7 +54,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		viper.AddConfigPath(".")
-		viper.SetConfigName("notion-md-gen")
+		viper.SetConfigName("notion-site")
 	}
 
 	if err := godotenv.Load(); err == nil {

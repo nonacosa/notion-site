@@ -1,7 +1,7 @@
 .PHONY: all dep lint vet test test-coverage build clean
 
 # custom define
-PROJECT := notion-md-gen
+PROJECT := notion-site
 MAINFILE := main.go
 
 all: build

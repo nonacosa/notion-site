@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bonaysoft/notion-md-gen/pkg/tomarkdown"
+	"github.com/pkwenda/notion-site/pkg/tomarkdown"
 
 	"github.com/dstotijn/go-notion"
 )

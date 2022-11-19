@@ -1,6 +1,6 @@
 package main
 
-import "github.com/bonaysoft/notion-md-gen/cmd"
+import "github.com/pkwenda/notion-site/cmd"
 
 func main() {
 	cmd.Execute()

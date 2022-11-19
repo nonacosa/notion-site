@@ -1,4 +1,4 @@
-module github.com/bonaysoft/notion-md-gen
+module github.com/pkwenda/notion-site
 
 go 1.17
 

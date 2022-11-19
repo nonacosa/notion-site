@@ -11,10 +11,10 @@ Prerequisites:
 - `make`
 - [Go 1.17+](https://golang.org/doc/install)
 
-Clone `notion-md-gen` anywhere:
+Clone `notion-site` anywhere:
 
 ```sh
-$ git clone git@github.com:bonaysoft/notion-md-gen.git
+$ git clone git@github.com:pkwenda/notion-site.git
 ```
 
 Install the build and lint dependencies:
@@ -49,5 +49,5 @@ You can follow the documentation on
 
 ## Submit a pull request
 
-Push your branch to your `notion-md-gen` fork and open a pull request against the
+Push your branch to your `notion-site` fork and open a pull request against the
 master branch.

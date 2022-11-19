@@ -53,8 +53,8 @@ func DefaultConfigInit() error {
 
 	defer func() {
 		_ = ioutil.WriteFile(".env", []byte("NOTION_SECRET=xxxx"), 0644)
-		fmt.Println("Config file notion-md-gen.yaml and .env created, please edit them for yourself.")
+		fmt.Println("Config file notion-site.yaml and .env created, please edit them for yourself.")
 	}()
 
-	return ioutil.WriteFile("notion-md-gen.yaml", out, fs.FileMode(0644))
+	return ioutil.WriteFile("notion-site.yaml", out, fs.FileMode(0644))
 }

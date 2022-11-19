@@ -6,7 +6,7 @@ BLUE='\033[1;34m'
 DARK='\033[1;30m'
 NC='\033[0m'
 
-echo "${BLUE}notion-md-gen binary installer ${version}${NC}"
+echo "${BLUE}notion-site binary installer ${version}${NC}"
 unameOut="$(uname -s)"
 
 case "${unameOut}" in
@@ -18,7 +18,7 @@ Darwin*)
   ;;
 esac
 bin_dir="/usr/local/bin"
-url=$(curl -s https://api.github.com/repos/bonaysoft/notion-md-gen/releases/latest | grep "browser_download_url.*${arch}.tar.gz\"" | cut -d : -f 2,3 | tr -d '\"[:space:]')
+url=$(curl -s https://api.github.com/repos/pkwenda/notion-site/releases/latest | grep "browser_download_url.*${arch}.tar.gz\"" | cut -d : -f 2,3 | tr -d '\"[:space:]')
 
 echo "${DARK}"
 echo "Configuration: [${arch}]"
@@ -32,11 +32,11 @@ curl -J -L "${url}" | tar xz -C "${bin_dir}"
 if [ $? -eq 0 ]; then
   echo "${GREEN}"
   echo "Installation completed successfully."
-  echo "$ notion-md-gen version"
-  "${bin_dir}"/notion-md-gen version
+  echo "$ notion-site version"
+  "${bin_dir}"/notion-site version
 else
   echo "${RED}"
-  echo "Failed installing notion-md-gen"
+  echo "Failed installing notion-site"
 fi
 
 echo "${NC}"

@@ -13,6 +13,6 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN go build -o ./bin/notion-md-gen main.go
+RUN go build -o ./bin/notion-site main.go
 
-ENTRYPOINT ["/usr/src/app/bin/notion-md-gen"]
+ENTRYPOINT ["/usr/src/app/bin/notion-site"]
