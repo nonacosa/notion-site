@@ -1,1 +1,1 @@
-this is file ntpl todo{{"\n"}}
+{{"\n"}}{{- "<a style=\"background-color: #aaa;color: white;\" href=\"" }} {{.Extra.Url}} {{"\">"}} {{.Extra.FileName}} {{"</a>"}}

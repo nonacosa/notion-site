@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/sprig"
+	"github.com/druidcaesa/gotool"
 	"github.com/dstotijn/go-notion"
 	"github.com/otiai10/opengraph"
 	"gopkg.in/yaml.v3"
@@ -314,6 +315,7 @@ func (tm *ToMarkdown) downloadMedia(media *notion.FileBlock) error {
 			return "", err
 		}
 		var convertWinPath = strings.ReplaceAll(filepath.Join(tm.ImgVisitPath, imgFilename), "\\", "/")
+
 		return convertWinPath, nil
 	}
 
@@ -409,6 +411,8 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.Embed, extra *map[string]int
 func (tm *ToMarkdown) injectFileInfo(pdf *notion.FileBlock, extra *map[string]interface{}) error {
 	url := pdf.File.URL
 	(*extra)["Url"] = url
+	name, _ := gotool.StrUtils.RemoveSuffix(url)
+	(*extra)["FileName"] = name
 	return nil
 }
 func (tm *ToMarkdown) injectCalloutInfo(callout *notion.Callout, extra *map[string]interface{}) error {
