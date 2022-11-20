@@ -484,7 +484,11 @@ func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePage
 			fmv = *prop
 		}
 	default:
-		fmt.Printf("Unsupport prop: %s - %T\n", prop, prop)
+		if property.Type == "checkbox" {
+			fmv = property.Checkbox
+		} else {
+			fmt.Printf("Unsupport prop: %s - %T\n", prop, prop)
+		}
 	}
 
 	if fmv == nil {

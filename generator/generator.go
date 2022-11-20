@@ -117,15 +117,19 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 
 func preCheck(page notion.Page, config Markdown, tm *tomarkdown.ToMarkdown) (*os.File, error) {
 	var savePath = config.PostSavePath
-	var titleRich = page.Properties.(notion.DatabasePageProperties)["Title"].RichText
+	var fileName = page.Properties.(notion.DatabasePageProperties)["FileName"].RichText
 	var position = page.Properties.(notion.DatabasePageProperties)["Position"].Select
 	if position != nil {
 		tm.FrontMatter["Position"] = position.Name
 		savePath = position.Name
+		if err := os.MkdirAll(savePath, 0755); err != nil {
+			fmt.Errorf("couldn't create content folder: %s", err)
+		}
+		// todo file name prop should have default value !!
+		return os.Create(filepath.Join(savePath, generateSettingFilename(tomarkdown.ConvertRichText(fileName), page.CreatedTime, config)))
 	}
-	if len(titleRich) > 0 && tomarkdown.ConvertRichText(titleRich) == "config.yaml" {
+	if len(fileName) > 0 && tomarkdown.ConvertRichText(fileName) == "config.yaml" {
 		tm.FrontMatter["IsSetting"] = true
-		return os.Create(filepath.Join(savePath, generateSettingFilename(tomarkdown.ConvertRichText(titleRich), page.CreatedTime, config)))
 	}
 	return nil, nil
 }
