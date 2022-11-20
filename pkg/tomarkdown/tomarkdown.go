@@ -216,13 +216,14 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 		switch block.Type {
 		// todo image
 		case notion.BlockTypeImage:
-			err = tm.downloadImage(block.Image)
+			err = tm.downloadMedia(block.Image)
 		//todo hugo
 		case notion.BlockTypeBookmark:
 			err = tm.injectBookmarkInfo(block.Bookmark, &mdb.Extra)
 		case notion.BlockTypeVideo:
 			err = tm.injectVideoInfo(block.Video, &mdb.Extra)
 		case notion.BlockTypeFile:
+			err = tm.downloadMedia(block.File)
 			err = tm.injectFileInfo(block.File, &mdb.Extra)
 		case notion.BlockTypeLinkPreview:
 			err = tm.todo(block.Video, &mdb.Extra)
@@ -239,6 +240,7 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 		case notion.BlockTypeChildPage:
 			err = tm.todo(block.Video, &mdb.Extra)
 		case notion.BlockTypePDF:
+			err = tm.downloadMedia(block.PDF)
 			err = tm.injectFileInfo(block.PDF, &mdb.Extra)
 		case notion.BlockTypeSyncedBlock:
 			err = tm.todo(block.Video, &mdb.Extra)
@@ -300,7 +302,7 @@ func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag
 	return nil
 }
 
-func (tm *ToMarkdown) downloadImage(image *notion.FileBlock) error {
+func (tm *ToMarkdown) downloadMedia(media *notion.FileBlock) error {
 	download := func(imgURL string) (string, error) {
 		resp, err := http.Get(imgURL)
 		if err != nil {
@@ -316,11 +318,15 @@ func (tm *ToMarkdown) downloadImage(image *notion.FileBlock) error {
 	}
 
 	var err error
-	if image.Type == notion.FileTypeExternal {
-		image.External.URL, err = download(image.External.URL)
+	//if media.Type == notion.FileTypeFile {
+	//	media.External.URL, err = download(media.External.URL)
+	//}
+	println(media.Type)
+	if media.Type == notion.FileTypeExternal {
+		media.External.URL, err = download(media.External.URL)
 	}
-	if image.Type == notion.FileTypeFile {
-		image.File.URL, err = download(image.File.URL)
+	if media.Type == notion.FileTypeFile {
+		media.File.URL, err = download(media.File.URL)
 	}
 
 	return err
@@ -495,7 +501,7 @@ func (tm *ToMarkdown) injectFrontMatterCover(cover *notion.Cover) {
 		File:     cover.File,
 		External: cover.External,
 	}
-	if err := tm.downloadImage(image); err != nil {
+	if err := tm.downloadMedia(image); err != nil {
 		return
 	}
 
@@ -516,7 +522,7 @@ func (tm *ToMarkdown) downloadFrontMatterImage(url string) string {
 			URL: url,
 		},
 	}
-	if err := tm.downloadImage(image); err != nil {
+	if err := tm.downloadMedia(image); err != nil {
 		return ""
 	}
 

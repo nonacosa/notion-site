@@ -85,7 +85,7 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 		return fmt.Errorf("error create file: %s", err)
 	}
 
-	tm.ImgSavePath = filepath.Join(config.ImageSavePath, pageName)
+	tm.ImgSavePath = filepath.Join(config.MediaSavePath, pageName)
 	tm.ImgVisitPath = filepath.Join(config.ImagePublicLink, url.PathEscape(pageName))
 	tm.ContentTemplate = config.Template
 	// todo edit frontMatter
