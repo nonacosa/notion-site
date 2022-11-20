@@ -119,6 +119,9 @@ func preCheck(page notion.Page, config Markdown, tm *tomarkdown.ToMarkdown) (*os
 	var savePath = config.PostSavePath
 	var fileName = page.Properties.(notion.DatabasePageProperties)["FileName"].RichText
 	var position = page.Properties.(notion.DatabasePageProperties)["Position"].Select
+	if len(fileName) > 0 && tomarkdown.ConvertRichText(fileName) == "config.yaml" {
+		tm.FrontMatter["IsSetting"] = true
+	}
 	if position != nil {
 		tm.FrontMatter["Position"] = position.Name
 		savePath = position.Name
