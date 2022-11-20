@@ -84,7 +84,13 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 	if err != nil {
 		return fmt.Errorf("error create file: %s", err)
 	}
-
+	pageName = strings.ReplaceAll(
+		strings.ToValidUTF8(
+			strings.ToLower(pageName),
+			"",
+		),
+		" ", "-",
+	)
 	tm.ImgSavePath = filepath.Join(config.MediaSavePath, pageName)
 	tm.ImgVisitPath = filepath.Join(config.ImagePublicLink, url.PathEscape(pageName))
 	tm.ContentTemplate = config.Template
