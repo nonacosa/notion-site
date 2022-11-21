@@ -6,3 +6,11 @@
 {{- if eq .Extra.Plat "bilibili"}}
     {{"{{< bilibili "}}{{.Extra.Url}}{{" >}}"}}
 {{end}}
+
+{{- if eq .Extra.Plat "twitter"}}
+   {{ `{{< tweet user="SanDiegoZoo" id="1512067081398673415" >}}` }}{{"\n"}}
+{{end}}
+
+{{- if eq .Extra.Plat "gist"}}
+    {{"{{< gist "}}{{.Extra.Url}}{{" >}}"}}{{"\n"}}
+{{end}}

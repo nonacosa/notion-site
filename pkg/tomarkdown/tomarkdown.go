@@ -284,7 +284,9 @@ func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag
 	if err != nil {
 		return err
 	}
-
+	if bType == "embed" {
+		println(bType)
+	}
 	if err := tpl.Execute(tm.ContentBuffer, block); err != nil {
 		return err
 	}
@@ -401,6 +403,22 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.Embed, extra *map[string]int
 			url = url[strings.Index(url, "video/")+6:]
 			plat = "bilibili"
 		}
+		if strings.Contains(url, "twitter.com") {
+			url = url[strings.Index(url, "status/")+7:]
+			plat = "twitter"
+		}
+		if strings.Contains(url, "gist.github.com") {
+			urls := url[strings.Index(url, ".com/")+5:]
+			url = ""
+			for i, s := range strings.Split(urls, "/") {
+				url += s
+				if i < len(urls)-1 {
+					url += " "
+				}
+			}
+			plat = "gist"
+		}
+
 	}
 	(*extra)["Url"] = url
 	(*extra)["Plat"] = plat
