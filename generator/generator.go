@@ -67,12 +67,6 @@ func Run(config Config) error {
 func generate(client *notion.Client, page notion.Page, blocks []notion.Block, config Markdown) error {
 	// Create file
 	pageName := tomarkdown.ConvertRichText(page.Properties.(notion.DatabasePageProperties)["Name"].Title)
-	//title := tomarkdown.ConvertRichText(page.Properties.(notion.DatabasePageProperties)["Title"].RichText)
-	//status := page.Properties.(notion.DatabasePageProperties)["Status"].Select.Name
-	//var date notion.DateTime
-	//if page.Properties.(notion.DatabasePageProperties)["Date"].Date != nil {
-	//	date = page.Properties.(notion.DatabasePageProperties)["Date"].Date.Start
-	//}
 	// Generate markdown content to the file
 	tm := tomarkdown.New()
 	var f *os.File
