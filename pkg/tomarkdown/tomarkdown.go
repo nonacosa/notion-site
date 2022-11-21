@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
+	utils "github.com/pkwenda/notion-site/pkg"
 	"io"
 	"net/http"
 	"net/url"
@@ -399,23 +400,17 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.Embed, extra *map[string]int
 	if len(url) == 0 {
 		url = "http://www.baidu.com"
 	} else {
-		if strings.Contains(url, "bilibili.com") {
-			url = url[strings.Index(url, "video/")+6:]
+		if strings.Contains(url, utils.Bilibili) {
+			url = utils.FindTextP(url, "video/")
 			plat = "bilibili"
 		}
-		if strings.Contains(url, "twitter.com") {
+		if strings.Contains(url, utils.Twitter) {
 			url = url[strings.Index(url, "status/")+7:]
+			url = utils.FindTextP(url, "status/")
 			plat = "twitter"
 		}
-		if strings.Contains(url, "gist.github.com") {
-			urls := url[strings.Index(url, ".com/")+5:]
-			url = ""
-			for i, s := range strings.Split(urls, "/") {
-				url += s
-				if i < len(urls)-1 {
-					url += " "
-				}
-			}
+		if strings.Contains(url, utils.Gist) {
+			url = strings.Join(strings.Split(utils.FindTextP(url, utils.Gist), "/"), " ")
 			plat = "gist"
 		}
 
