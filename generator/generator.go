@@ -80,7 +80,7 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 	}
 	pageName = strings.ReplaceAll(
 		strings.ToValidUTF8(
-			strings.ToLower(pageName),
+			strings.ToLower(strings.TrimSpace(pageName)),
 			"",
 		),
 		" ", "-",
@@ -134,7 +134,7 @@ func preCheck(page notion.Page, config Markdown, tm *tomarkdown.ToMarkdown) (*os
 func generateArticleFilename(title string, date time.Time, config Markdown) string {
 	escapedTitle := strings.ReplaceAll(
 		strings.ToValidUTF8(
-			strings.ToLower(title),
+			strings.ToLower(strings.TrimSpace(title)),
 			"",
 		),
 		" ", "-",
@@ -151,7 +151,7 @@ func generateArticleFilename(title string, date time.Time, config Markdown) stri
 func generateSettingFilename(title string, date time.Time, config Markdown) string {
 	name := strings.ReplaceAll(
 		strings.ToValidUTF8(
-			strings.ToLower(title),
+			strings.ToLower(strings.TrimSpace(title)),
 			"",
 		),
 		" ", "-",
