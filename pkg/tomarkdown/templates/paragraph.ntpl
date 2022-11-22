@@ -1,1 +1,1 @@
-{{ rich2md .Block.RichText }} {{"\n"}}
+{{ rich2md .Block.RichText }}{{"\n\n"}}

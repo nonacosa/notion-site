@@ -1,4 +1,0 @@
-{{- range .Block.Cells }}| {{rich2md .}} {{ end -}}|{{"\n"}}
-{{- if eq .Extra.SameBlockIdx 0 }}
-    {{- range .Block.Cells}}| :-----: {{end}}|{{"\n"}}
-{{- end -}}

@@ -272,6 +272,8 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			err = tm.injectFileInfo(block.(*notion.AudioBlock), &mdb.Extra)
 		case reflect.TypeOf(&notion.ToDoBlock{}):
 			mdb.Block = block.(*notion.ToDoBlock)
+		case reflect.TypeOf(&notion.TableBlock{}):
+			mdb.Block = block.(*notion.TableBlock)
 		default:
 			print(1)
 		}
@@ -301,6 +303,7 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 	funcs := sprig.TxtFuncMap()
 	funcs["deref"] = func(i *bool) bool { return *i }
 	funcs["rich2md"] = ConvertRichText
+	funcs["table2md"] = ConvertTable
 	funcs["log"] = func(p any) string {
 		s, _ := json.Marshal(p)
 		return string(s)
@@ -673,6 +676,54 @@ func (tm *ToMarkdown) downloadFrontMatterImage(url string) string {
 	}
 
 	return image.External.URL
+}
+
+func ConvertTable(rows []notion.Block) string {
+	buf := &bytes.Buffer{}
+
+	if len(rows) == 0 {
+		return ""
+	}
+	var head = ""
+	l := len((rows[0]).(*notion.TableRowBlock).Cells)
+	for i := 0; i < l; i++ {
+		head += "| "
+		if i == l-1 {
+			head += "|\n"
+		}
+	}
+	for i := 0; i < l; i++ {
+		head += "| - "
+		if i == l-1 {
+			head += "|\n"
+		}
+	}
+	buf.WriteString(head)
+	for _, row := range rows {
+		rowBlock := row.(*notion.TableRowBlock)
+		buf.WriteString(ConvertRow(rowBlock))
+	}
+
+	return buf.String()
+}
+
+func ConvertRow(r *notion.TableRowBlock) string {
+	var rowMd = ""
+	for i, cell := range r.Cells {
+		if i == 0 {
+			rowMd += "|"
+		}
+		for _, rich := range cell {
+			a := ConvertRich(rich)
+			print(a)
+			rowMd += " " + a + " |"
+
+		}
+		if i == len(r.Cells)-1 {
+			rowMd += "\n"
+		}
+	}
+	return rowMd
 }
 
 func ConvertRichText(t []notion.RichText) string {
