@@ -2,11 +2,11 @@ package generator
 
 import (
 	"context"
-	"log"
-	"time"
-
 	"github.com/briandowns/spinner"
 	"github.com/dstotijn/go-notion"
+	"log"
+	"reflect"
+	"time"
 )
 
 var spin = spinner.New(spinner.CharSets[14], time.Millisecond*100)
@@ -17,12 +17,12 @@ func filterFromConfig(config Notion) *notion.DatabaseQueryFilter {
 	}
 
 	properties := make([]notion.DatabaseQueryFilter, len(config.FilterValue))
-	for i, val := range config.FilterValue {
+	for i, _ := range config.FilterValue {
 		properties[i] = notion.DatabaseQueryFilter{
 			Property: config.FilterProp,
-			Select: &notion.SelectDatabaseQueryFilter{
-				Equals: val,
-			},
+			//TODO Select: &notion.SelectDatabaseQueryFilter{
+			//	Equals: val,
+			//},
 		}
 	}
 
@@ -37,7 +37,7 @@ func queryDatabase(client *notion.Client, config Notion) (notion.DatabaseQueryRe
 	defer spin.Stop()
 
 	query := &notion.DatabaseQuery{
-		Filter:   filterFromConfig(config),
+		// TODO Filter:   filterFromConfig(config),
 		PageSize: 100,
 	}
 	return client.QueryDatabase(context.Background(), config.DatabaseID, query)
@@ -80,23 +80,25 @@ func retrieveBlockChildren(client *notion.Client, blockID string) (blocks []noti
 	}
 
 	for _, block := range blocks {
-		if !block.HasChildren {
+		blockType := reflect.TypeOf(block)
+		if !block.HasChildren() {
 			continue
 		}
-
-		switch block.Type {
-		case notion.BlockTypeParagraph:
-			block.Paragraph.Children, err = retrieveBlockChildren(client, block.ID)
-		case notion.BlockTypeCallout:
-			block.Callout.Children, err = retrieveBlockChildren(client, block.ID)
-		case notion.BlockTypeQuote:
-			block.Quote.Children, err = retrieveBlockChildren(client, block.ID)
-		case notion.BlockTypeBulletedListItem:
-			block.BulletedListItem.Children, err = retrieveBlockChildren(client, block.ID)
-		case notion.BlockTypeNumberedListItem:
-			block.NumberedListItem.Children, err = retrieveBlockChildren(client, block.ID)
-		case notion.BlockTypeTable:
-			block.Table.Children, err = retrieveBlockChildren(client, block.ID)
+		switch blockType {
+		case reflect.TypeOf(&notion.ParagraphBlock{}):
+			block.(*notion.ParagraphBlock).Children, err = retrieveBlockChildren(client, block.ID())
+		case reflect.TypeOf(&notion.CalloutBlock{}):
+			block.(*notion.CalloutBlock).Children, err = retrieveBlockChildren(client, block.ID())
+		case reflect.TypeOf(&notion.QuoteBlock{}):
+			block.(*notion.QuoteBlock).Children, err = retrieveBlockChildren(client, block.ID())
+		case reflect.TypeOf(&notion.BulletedListItemBlock{}):
+			block.(*notion.BulletedListItemBlock).Children, err = retrieveBlockChildren(client, block.ID())
+		case reflect.TypeOf(&notion.NumberedListItemBlock{}):
+			block.(*notion.NumberedListItemBlock).Children, err = retrieveBlockChildren(client, block.ID())
+		case reflect.TypeOf(&notion.ToDoBlock{}):
+			block.(*notion.ToDoBlock).Children, err = retrieveBlockChildren(client, block.ID())
+		case reflect.TypeOf(&notion.TableBlock{}):
+			block.(*notion.TableBlock).Children, err = retrieveBlockChildren(client, block.ID())
 		}
 
 		if err != nil {
@@ -132,7 +134,7 @@ func changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
 
 	_, err := client.UpdatePage(context.Background(), p.ID,
 		notion.UpdatePageParams{
-			DatabasePageProperties: &updatedProps,
+			//TODO DatabasePageProperties: &updatedProps,
 		},
 	)
 	if err != nil {

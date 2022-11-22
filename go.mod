@@ -1,12 +1,12 @@
 module github.com/pkwenda/notion-site
 
-go 1.17
+go 1.19
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/briandowns/spinner v1.18.0
 	github.com/druidcaesa/gotool v0.0.0-20220613023420-645c641d1304
-	github.com/dstotijn/go-notion v0.6.0
+	github.com/dstotijn/go-notion v0.9.0
 	github.com/joho/godotenv v1.4.0
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/otiai10/opengraph v1.1.3

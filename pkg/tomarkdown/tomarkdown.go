@@ -3,6 +3,7 @@ package tomarkdown
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
 	utils "github.com/pkwenda/notion-site/pkg"
@@ -11,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"text/template"
 	"time"
@@ -26,10 +28,20 @@ import (
 var mdTemplatesFS embed.FS
 
 var (
-	extendedSyntaxBlocks            = []notion.BlockType{notion.BlockTypeBookmark, notion.BlockTypeCallout}
-	blockTypeInExtendedSyntaxBlocks = func(bType notion.BlockType) bool {
+	extendedSyntaxBlocks            = []any{reflect.TypeOf(&notion.BookmarkBlock{}), reflect.TypeOf(&notion.CalloutBlock{})}
+	blockTypeInExtendedSyntaxBlocks = func(bType any) bool {
 		for _, blockType := range extendedSyntaxBlocks {
 			if blockType == bType {
+				return true
+			}
+		}
+
+		return false
+	}
+	mediaBlocks          = []any{reflect.TypeOf(&notion.VideoBlock{}), reflect.TypeOf(&notion.ImageBlock{}), reflect.TypeOf(&notion.FileBlock{}), reflect.TypeOf(&notion.PDFBlock{}), reflect.TypeOf(&notion.AudioBlock{})}
+	blockTypeMediaBlocks = func(bType any) bool {
+		for _, blockType := range mediaBlocks {
+			if blockType == reflect.TypeOf(bType) {
 				return true
 			}
 		}
@@ -42,6 +54,14 @@ type MdBlock struct {
 	notion.Block
 	Depth int
 	Extra map[string]interface{}
+}
+
+type MediaBlock struct {
+	notion.ImageBlock
+	notion.VideoBlock
+	notion.PDFBlock
+	notion.AudioBlock
+	notion.FileBlock
 }
 
 type ToMarkdown struct {
@@ -107,7 +127,7 @@ func (tm *ToMarkdown) ExtendedSyntaxEnabled() bool {
 	return false
 }
 
-func (tm *ToMarkdown) shouldSkipRender(bType notion.BlockType) bool {
+func (tm *ToMarkdown) shouldSkipRender(bType any) bool {
 	return !tm.ExtendedSyntaxEnabled() && blockTypeInExtendedSyntaxBlocks(bType)
 }
 
@@ -183,11 +203,11 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer, fm *FrontMatter) error {
 
 func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 	var sameBlockIdx int
-	var lastBlockType notion.BlockType
+	var lastBlockType any
 
 	hasMoreTag := false
 	for index, block := range blocks {
-		if tm.shouldSkipRender(block.Type) {
+		if tm.shouldSkipRender(reflect.TypeOf(block)) {
 			continue
 		}
 
@@ -198,60 +218,62 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 		}
 
 		sameBlockIdx++
-		if block.Type != lastBlockType {
+		if reflect.TypeOf(block) != lastBlockType {
 			sameBlockIdx = 0
 		}
 		mdb.Extra["SameBlockIdx"] = sameBlockIdx
 
 		if tm.FrontMatter["IsSetting"] == true {
-			if block.Type == notion.BlockTypeCode {
+			if reflect.TypeOf(block) == reflect.TypeOf(&notion.CodeBlock{}) {
 				if err := tm.GenBlock("setting", mdb, false, true); err != nil {
 					return err
 				}
-				lastBlockType = block.Type
-				fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, block.Type, block.ID))
+				lastBlockType = reflect.TypeOf(block)
+				fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, reflect.TypeOf(block), block.ID()))
 				continue
 			}
 		}
 
 		var err error
-		switch block.Type {
+		switch reflect.TypeOf(block) {
 		// todo image
-		case notion.BlockTypeImage:
-			err = tm.downloadMedia(block.Image)
+		case reflect.TypeOf(&notion.ImageBlock{}):
+			err = tm.downloadMedia(block.(*notion.ImageBlock))
 		//todo hugo
-		case notion.BlockTypeBookmark:
-			err = tm.injectBookmarkInfo(block.Bookmark, &mdb.Extra)
-		case notion.BlockTypeVideo:
-			err = tm.injectVideoInfo(block.Video, &mdb.Extra)
-		case notion.BlockTypeFile:
-			err = tm.downloadMedia(block.File)
-			err = tm.injectFileInfo(block.File, &mdb.Extra)
-		case notion.BlockTypeLinkPreview:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case notion.BlockTypeLinkToPage:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case notion.BlockTypeEmbed:
-			err = tm.injectEmbedInfo(block.Embed, &mdb.Extra)
-		case notion.BlockTypeCallout:
-			err = tm.injectCalloutInfo(block.Callout, &mdb.Extra)
-		case notion.BlockTypeBreadCrumb:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case notion.BlockTypeChildDatabase:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case notion.BlockTypeChildPage:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case notion.BlockTypePDF:
-			err = tm.downloadMedia(block.PDF)
-			err = tm.injectFileInfo(block.PDF, &mdb.Extra)
-		case notion.BlockTypeSyncedBlock:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case notion.BlockTypeTemplate:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case notion.BlockTypeUnsupported:
-			err = tm.todo(block.Video, &mdb.Extra)
-		case "audio":
-			// todo go-notion not support
+		case reflect.TypeOf(&notion.BookmarkBlock{}):
+			err = tm.injectBookmarkInfo(block.(*notion.BookmarkBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.VideoBlock{}):
+			err = tm.injectVideoInfo(block.(*notion.VideoBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.FileBlock{}):
+			err = tm.downloadMedia(block.(*notion.FileBlock))
+			err = tm.injectFileInfo(block.(*notion.FileBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.LinkPreviewBlock{}):
+			err = tm.todo(block.(*notion.LinkPreviewBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.LinkToPageBlock{}):
+			err = tm.todo(block.(*notion.LinkToPageBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.EmbedBlock{}):
+			err = tm.injectEmbedInfo(block.(*notion.EmbedBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.CalloutBlock{}):
+			err = tm.injectCalloutInfo(block.(*notion.CalloutBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.BreadcrumbBlock{}):
+			err = tm.todo(block.(*notion.BreadcrumbBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.ChildDatabaseBlock{}):
+			err = tm.todo(block.(*notion.ChildDatabaseBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.ChildPageBlock{}):
+			err = tm.todo(block.(*notion.ChildPageBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.PDFBlock{}):
+			err = tm.downloadMedia(block.(*notion.PDFBlock))
+			//todo err = tm.injectFileInfo(block.(*notion.PDFBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.SyncedBlock{}):
+			err = tm.todo(block.(*notion.SyncedBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.TemplateBlock{}):
+			err = tm.todo(block.(*notion.TemplateBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.AudioBlock{}):
+			err = tm.todo(block.(*notion.AudioBlock), &mdb.Extra)
+		case reflect.TypeOf(&notion.ToDoBlock{}):
+			mdb.Block = block.(*notion.ToDoBlock)
+		default:
+			print(1)
 		}
 
 		if err != nil {
@@ -263,11 +285,11 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			addMoreTag = tm.ContentBuffer.Len() > 60
 			hasMoreTag = true
 		}
-		if err := tm.GenBlock(block.Type, mdb, addMoreTag, false); err != nil {
+		if err := tm.GenBlock(utils.GetBlockType(block), mdb, addMoreTag, false); err != nil {
 			return err
 		}
-		lastBlockType = block.Type
-		fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, block.Type, block.ID))
+		lastBlockType = reflect.TypeOf(block)
+		fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, reflect.TypeOf(block), block.ID()))
 
 	}
 
@@ -275,13 +297,19 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 }
 
 // 模板
-func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag bool, skip bool) error {
+func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, skip bool) error {
 	funcs := sprig.TxtFuncMap()
 	funcs["deref"] = func(i *bool) bool { return *i }
 	funcs["rich2md"] = ConvertRichText
+	funcs["log"] = func(p any) string {
+		s, _ := json.Marshal(p)
+		return string(s)
+	}
 
 	t := template.New(fmt.Sprintf("%s.ntpl", bType)).Funcs(funcs)
 	tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", bType))
+	//t := template.New(fmt.Sprintf("%s.ntpl", "log")).Funcs(funcs)
+	//tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", "log"))
 	if err != nil {
 		return err
 	}
@@ -297,7 +325,7 @@ func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag
 			tm.ContentBuffer.WriteString("<!--more-->")
 		}
 
-		if block.HasChildren {
+		if block.HasChildren() {
 			block.Depth++
 			return tm.GenContentBlocks(getChildrenBlocks(block), block.Depth)
 		}
@@ -306,7 +334,7 @@ func (tm *ToMarkdown) GenBlock(bType notion.BlockType, block MdBlock, addMoreTag
 	return nil
 }
 
-func (tm *ToMarkdown) downloadMedia(media *notion.FileBlock) error {
+func (tm *ToMarkdown) downloadImage(media notion.ImageBlock) error {
 	download := func(imgURL string) (string, error) {
 		resp, err := http.Get(imgURL)
 		if err != nil {
@@ -335,6 +363,76 @@ func (tm *ToMarkdown) downloadMedia(media *notion.FileBlock) error {
 	}
 
 	return err
+}
+
+func (tm *ToMarkdown) downloadMedia(dynamicMedia any) error {
+
+	download := func(imgURL string) (string, error) {
+		resp, err := http.Get(imgURL)
+		if err != nil {
+			return "", err
+		}
+
+		imgFilename, err := tm.saveTo(resp.Body, imgURL, tm.ImgSavePath)
+		if err != nil {
+			return "", err
+		}
+		var convertWinPath = strings.ReplaceAll(filepath.Join(tm.ImgVisitPath, imgFilename), "\\", "/")
+
+		return convertWinPath, nil
+	}
+
+	var err error
+
+	if blockTypeMediaBlocks(dynamicMedia) {
+		if reflect.TypeOf(dynamicMedia) == reflect.TypeOf(&notion.ImageBlock{}) {
+			media := dynamicMedia.(*notion.ImageBlock)
+			if media.Type == notion.FileTypeExternal {
+				media.External.URL, err = download(media.External.URL)
+			}
+			if media.Type == notion.FileTypeFile {
+				media.File.URL, err = download(media.File.URL)
+			}
+		}
+		if reflect.TypeOf(dynamicMedia) == reflect.TypeOf(&notion.FileBlock{}) {
+			media := dynamicMedia.(*notion.FileBlock)
+			if media.Type == notion.FileTypeExternal {
+				media.External.URL, err = download(media.External.URL)
+			}
+			if media.Type == notion.FileTypeFile {
+				media.File.URL, err = download(media.File.URL)
+			}
+		}
+		if reflect.TypeOf(dynamicMedia) == reflect.TypeOf(&notion.VideoBlock{}) {
+			media := dynamicMedia.(*notion.VideoBlock)
+			if media.Type == notion.FileTypeExternal {
+				media.External.URL, err = download(media.External.URL)
+			}
+			if media.Type == notion.FileTypeFile {
+				media.File.URL, err = download(media.File.URL)
+			}
+		}
+		if reflect.TypeOf(dynamicMedia) == reflect.TypeOf(&notion.PDFBlock{}) {
+			media := dynamicMedia.(*notion.PDFBlock)
+			if media.Type == notion.FileTypeExternal {
+				media.External.URL, err = download(media.External.URL)
+			}
+			if media.Type == notion.FileTypeFile {
+				media.File.URL, err = download(media.File.URL)
+			}
+		}
+		if reflect.TypeOf(dynamicMedia) == reflect.TypeOf(&notion.AudioBlock{}) {
+			media := dynamicMedia.(*notion.AudioBlock)
+			if media.Type == notion.FileTypeExternal {
+				media.External.URL, err = download(media.External.URL)
+			}
+			if media.Type == notion.FileTypeFile {
+				media.File.URL, err = download(media.File.URL)
+			}
+		}
+	}
+	return err
+
 }
 
 func (tm *ToMarkdown) saveTo(reader io.Reader, rawURL, distDir string) (string, error) {
@@ -366,7 +464,7 @@ func (tm *ToMarkdown) saveTo(reader io.Reader, rawURL, distDir string) (string, 
 }
 
 // injectBookmarkInfo set bookmark info into the extra map field
-func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.Bookmark, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *map[string]interface{}) error {
 	og, err := opengraph.Fetch(bookmark.URL)
 	if err != nil {
 		return err
@@ -383,7 +481,7 @@ func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.Bookmark, extra *map[s
 	return nil
 }
 
-func (tm *ToMarkdown) injectVideoInfo(video *notion.FileBlock, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectVideoInfo(video *notion.VideoBlock, extra *map[string]interface{}) error {
 	videoUrl := video.External.URL
 	var id, plat string
 	if strings.Contains(videoUrl, "youtube") {
@@ -394,7 +492,7 @@ func (tm *ToMarkdown) injectVideoInfo(video *notion.FileBlock, extra *map[string
 	(*extra)["Id"] = id
 	return nil
 }
-func (tm *ToMarkdown) injectEmbedInfo(embed *notion.Embed, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[string]interface{}) error {
 	var plat = ""
 	url := embed.URL
 	if len(url) == 0 {
@@ -428,9 +526,9 @@ func (tm *ToMarkdown) injectFileInfo(pdf *notion.FileBlock, extra *map[string]in
 	(*extra)["FileName"] = name
 	return nil
 }
-func (tm *ToMarkdown) injectCalloutInfo(callout *notion.Callout, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map[string]interface{}) error {
 	var text = ""
-	for _, richText := range callout.RichTextBlock.Text {
+	for _, richText := range callout.RichText {
 		// todo if link ? or change highlight hugo
 		text += richText.Text.Content
 	}
@@ -439,7 +537,7 @@ func (tm *ToMarkdown) injectCalloutInfo(callout *notion.Callout, extra *map[stri
 	return nil
 }
 
-func (tm *ToMarkdown) todo(video *notion.FileBlock, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) todo(video any, extra *map[string]interface{}) error {
 
 	return nil
 }
@@ -606,33 +704,33 @@ func emphFormat(a *notion.Annotations) (s string) {
 }
 
 func getChildrenBlocks(block MdBlock) []notion.Block {
-	switch block.Type {
-	case notion.BlockTypeQuote:
-		return block.Quote.Children
-	case notion.BlockTypeToggle:
-		return block.Toggle.Children
-	case notion.BlockTypeParagraph:
-		return block.Paragraph.Children
-	case notion.BlockTypeCallout:
-		return block.Callout.Children
-	case notion.BlockTypeBulletedListItem:
-		return block.BulletedListItem.Children
-	case notion.BlockTypeNumberedListItem:
-		return block.NumberedListItem.Children
-	case notion.BlockTypeToDo:
-		return block.ToDo.Children
-	case notion.BlockTypeCode:
-		return block.Code.Children
-	case notion.BlockTypeColumn:
-		return block.Column.Children
-	case notion.BlockTypeColumnList:
-		return block.ColumnList.Children
-	case notion.BlockTypeTable:
-		return block.Table.Children
-	case notion.BlockTypeSyncedBlock:
-		return block.SyncedBlock.Children
-	case notion.BlockTypeTemplate:
-		return block.Template.Children
+	switch reflect.TypeOf(block.Block) {
+	case reflect.TypeOf(&notion.QuoteBlock{}):
+		return block.Block.(*notion.QuoteBlock).Children
+	case reflect.TypeOf(&notion.ToggleBlock{}):
+		return block.Block.(*notion.ParagraphBlock).Children
+	case reflect.TypeOf(&notion.ParagraphBlock{}):
+		return block.Block.(*notion.CalloutBlock).Children
+	case reflect.TypeOf(&notion.CalloutBlock{}):
+		return block.Block.(*notion.BulletedListItemBlock).Children
+	case reflect.TypeOf(&notion.BulletedListItemBlock{}):
+		return block.Block.(*notion.QuoteBlock).Children
+	case reflect.TypeOf(&notion.NumberedListItemBlock{}):
+		return block.Block.(*notion.NumberedListItemBlock).Children
+	case reflect.TypeOf(&notion.ToDoBlock{}):
+		return block.Block.(*notion.ToDoBlock).Children
+	case reflect.TypeOf(&notion.CodeBlock{}):
+		return block.Block.(*notion.CodeBlock).Children
+	case reflect.TypeOf(&notion.CodeBlock{}):
+		return block.Block.(*notion.ColumnBlock).Children
+	case reflect.TypeOf(&notion.ColumnListBlock{}):
+		//todo return block.block.(*notion.ColumnListBlock).Children
+	case reflect.TypeOf(&notion.TableBlock{}):
+		return block.Block.(*notion.TableBlock).Children
+	case reflect.TypeOf(&notion.SyncedBlock{}):
+		return block.Block.(*notion.SyncedBlock).Children
+	case reflect.TypeOf(&notion.TemplateBlock{}):
+		return block.Block.(*notion.TemplateBlock).Children
 	}
 
 	return nil

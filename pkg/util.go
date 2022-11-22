@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"reflect"
 	"strings"
+	"unicode"
 )
 
 const Baidu = "github.com"
@@ -22,4 +24,27 @@ func FindTextP(ori string, pre string) string {
 	preI := strings.Index(ori, pre)
 	ori = ori[preI+len(pre):]
 	return ori
+}
+
+func CamelCaseToUnderscore(s string) string {
+	var output []rune
+	for i, r := range s {
+		if i == 0 {
+			output = append(output, unicode.ToLower(r))
+			continue
+		}
+		if unicode.IsUpper(r) {
+			output = append(output, '_')
+		}
+		if unicode.IsNumber(r) {
+			output = append(output, '_')
+		}
+		output = append(output, unicode.ToLower(r))
+	}
+	return string(output)
+}
+
+func GetBlockType(block any) string {
+	blockType := strings.Replace(reflect.TypeOf(block).String(), "*notion.", "", -1)
+	return CamelCaseToUnderscore(strings.ReplaceAll(blockType, "Block", ""))
 }

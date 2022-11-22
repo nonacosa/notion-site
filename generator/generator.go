@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -167,10 +168,10 @@ func generateSettingFilename(title string, date time.Time, config Markdown) stri
 func syncMentionBlocks(client *notion.Client, blocks []notion.Block) (retBlocks []notion.Block, err error) {
 
 	for _, block := range blocks {
-		switch block.Type {
+		switch reflect.TypeOf(block) {
 		// todo image
-		case notion.BlockTypeParagraph:
-			richTexts := block.Paragraph.Text
+		case reflect.TypeOf(&notion.ParagraphBlock{}):
+			richTexts := block.(*notion.ParagraphBlock).RichText
 			for _, rich := range richTexts {
 				// todo mention .type = user
 				if rich.Type == "mention" {

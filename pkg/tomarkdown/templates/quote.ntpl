@@ -1,2 +1,2 @@
-> {{ rich2md .Quote.Text }}
+> {{ rich2md .Block.RichText }}
 

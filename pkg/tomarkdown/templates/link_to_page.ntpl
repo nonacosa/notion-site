@@ -1,1 +1,1 @@
-this is link_to_page ntpl todo{{"\n"}}
+{{.Block.Url}}
