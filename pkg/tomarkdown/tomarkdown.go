@@ -263,13 +263,13 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			err = tm.todo(block.(*notion.ChildPageBlock), &mdb.Extra)
 		case reflect.TypeOf(&notion.PDFBlock{}):
 			err = tm.downloadMedia(block.(*notion.PDFBlock))
-			//todo err = tm.injectFileInfo(block.(*notion.PDFBlock), &mdb.Extra)
+			err = tm.injectFileInfo(block.(*notion.PDFBlock), &mdb.Extra)
 		case reflect.TypeOf(&notion.SyncedBlock{}):
 			err = tm.todo(block.(*notion.SyncedBlock), &mdb.Extra)
 		case reflect.TypeOf(&notion.TemplateBlock{}):
 			err = tm.todo(block.(*notion.TemplateBlock), &mdb.Extra)
 		case reflect.TypeOf(&notion.AudioBlock{}):
-			err = tm.todo(block.(*notion.AudioBlock), &mdb.Extra)
+			err = tm.injectFileInfo(block.(*notion.AudioBlock), &mdb.Extra)
 		case reflect.TypeOf(&notion.ToDoBlock{}):
 			mdb.Block = block.(*notion.ToDoBlock)
 		default:
@@ -313,7 +313,7 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 	if err != nil {
 		return err
 	}
-	if bType == "embed" {
+	if bType == "code" {
 		println(bType)
 	}
 	if err := tpl.Execute(tm.ContentBuffer, block); err != nil {
@@ -519,8 +519,35 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 }
 
 // todo real file position
-func (tm *ToMarkdown) injectFileInfo(pdf *notion.FileBlock, extra *map[string]interface{}) error {
-	url := pdf.File.URL
+func (tm *ToMarkdown) injectFileInfo(file any, extra *map[string]interface{}) error {
+	var url string
+	if reflect.TypeOf(file) == reflect.TypeOf(&notion.FileBlock{}) {
+		f := file.(*notion.FileBlock)
+		if f.Type == notion.FileTypeExternal {
+			url = f.External.URL
+		}
+		if f.Type == notion.FileTypeFile {
+			url = f.File.URL
+		}
+	}
+	if reflect.TypeOf(file) == reflect.TypeOf(&notion.PDFBlock{}) {
+		f := file.(*notion.PDFBlock)
+		if f.Type == notion.FileTypeExternal {
+			url = f.External.URL
+		}
+		if f.Type == notion.FileTypeFile {
+			url = f.File.URL
+		}
+	}
+	if reflect.TypeOf(file) == reflect.TypeOf(&notion.AudioBlock{}) {
+		f := file.(*notion.AudioBlock)
+		if f.Type == notion.FileTypeExternal {
+			url = f.External.URL
+		}
+		if f.Type == notion.FileTypeFile {
+			url = f.File.URL
+		}
+	}
 	(*extra)["Url"] = url
 	name, _ := gotool.StrUtils.RemoveSuffix(url)
 	(*extra)["FileName"] = name
