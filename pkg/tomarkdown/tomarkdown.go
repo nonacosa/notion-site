@@ -112,6 +112,7 @@ func (tm *ToMarkdown) WithFrontMatter(page notion.Page) {
 	for fmKey, property := range pageProps {
 		tm.injectFrontMatter(fmKey, property)
 	}
+	tm.FrontMatter["Title"] = ConvertRichText(pageProps["Name"].Title)
 }
 
 func (tm *ToMarkdown) EnableExtendedSyntax(target string) {
@@ -131,9 +132,10 @@ func (tm *ToMarkdown) shouldSkipRender(bType any) bool {
 	return !tm.ExtendedSyntaxEnabled() && blockTypeInExtendedSyntaxBlocks(bType)
 }
 
-func (tm *ToMarkdown) GenerateTo(blocks []notion.Block, writer io.Writer, fm *FrontMatter) error {
+func (tm *ToMarkdown) GenerateTo(blocks []notion.Block, writer io.Writer) error {
+
 	if tm.FrontMatter["IsSetting"] != true {
-		if err := tm.GenFrontMatter(writer, fm); err != nil {
+		if err := tm.GenFrontMatter(writer); err != nil {
 			return err
 		}
 	}
@@ -154,13 +156,13 @@ func (tm *ToMarkdown) GenerateTo(blocks []notion.Block, writer io.Writer, fm *Fr
 	return err
 }
 
-func (tm *ToMarkdown) GenFrontMatter(writer io.Writer, fm *FrontMatter) error {
+func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
+	fm := &FrontMatter{}
 	if len(tm.FrontMatter) == 0 {
 		return nil
 	}
 	var imageKey string
 	var imagePath string
-
 	nfm := make(map[string]interface{})
 	for key, value := range tm.FrontMatter {
 		nfm[strings.ToLower(key)] = value
@@ -204,9 +206,12 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer, fm *FrontMatter) error {
 func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 	var sameBlockIdx int
 	var lastBlockType any
+	var currentBlockType string
 
 	hasMoreTag := false
 	for index, block := range blocks {
+		currentBlockType = utils.GetBlockType(block)
+
 		if tm.shouldSkipRender(reflect.TypeOf(block)) {
 			continue
 		}
@@ -287,18 +292,60 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			addMoreTag = tm.ContentBuffer.Len() > 60
 			hasMoreTag = true
 		}
-		if err := tm.GenBlock(utils.GetBlockType(block), mdb, addMoreTag, false); err != nil {
+
+		if tm.GalleryAction(blocks, index) == "skip" {
+			continue
+		}
+
+		if tm.GalleryAction(blocks, index) == "write" {
+			currentBlockType = "gallery"
+		}
+
+		// todo the last image is image and last image is image
+
+		if err := tm.GenBlock(currentBlockType, mdb, addMoreTag, false); err != nil {
 			return err
 		}
 		lastBlockType = reflect.TypeOf(block)
 		fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, reflect.TypeOf(block), block.ID()))
 
 	}
-
 	return nil
 }
 
-// 模板
+func (tm *ToMarkdown) GalleryAction(blocks []notion.Block, i int) string {
+	imageType := reflect.TypeOf(&notion.ImageBlock{})
+	if tm.FrontMatter["Type"] != "gallery" {
+		return "nothing"
+	}
+	if reflect.TypeOf(blocks[i]) != imageType {
+		return "noting"
+	}
+	if len(blocks) == 1 {
+		return "noting"
+	}
+	if i == 0 && imageType == reflect.TypeOf(blocks[i+1]) {
+		return "skip"
+	}
+	if i == len(blocks)-1 && imageType == reflect.TypeOf(blocks[i-1]) {
+		return "write"
+	}
+
+	if imageType != reflect.TypeOf(blocks[i-1]) {
+		return "skip"
+	}
+
+	if imageType == reflect.TypeOf(blocks[i-1]) && imageType == reflect.TypeOf(blocks[i+1]) {
+		return "skip"
+	}
+	if imageType == reflect.TypeOf(blocks[i-1]) && imageType != reflect.TypeOf(blocks[i+1]) {
+		return "write"
+	}
+
+	return "notion"
+}
+
+// GenBlock notion to hugo shortcodes template
 func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, skip bool) error {
 	funcs := sprig.TxtFuncMap()
 	funcs["deref"] = func(i *bool) bool { return *i }

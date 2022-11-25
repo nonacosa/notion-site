@@ -97,8 +97,6 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 
 	//parentId := strings.ReplaceAll(page.Parent.DatabaseID, "-", "")
 
-	var fm = &tomarkdown.FrontMatter{}
-
 	blocks, _ = syncMentionBlocks(client, blocks)
 
 	// save last update time
@@ -107,15 +105,18 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 
 	//storage.Save(fmt.Sprintf("%s_%s", parentId, page.ID), string(websiteItemJson))
 
-	return tm.GenerateTo(blocks, f, fm)
+	return tm.GenerateTo(blocks, f)
 }
 
 func preCheck(page notion.Page, config Markdown, tm *tomarkdown.ToMarkdown) (*os.File, error) {
 	var savePath = config.PostSavePath
-	var fileName = page.Properties.(notion.DatabasePageProperties)["FileName"].RichText
+	var pageType = page.Properties.(notion.DatabasePageProperties)["Type"].Select
 	var position = page.Properties.(notion.DatabasePageProperties)["Position"].Select
-	if len(fileName) > 0 && tomarkdown.ConvertRichText(fileName) == "config.yaml" {
-		tm.FrontMatter["IsSetting"] = true
+	var pageName = page.Properties.(notion.DatabasePageProperties)["Name"].Title
+	if pageType != nil {
+		if pageType.Name == "setting" {
+			tm.FrontMatter["IsSetting"] = true
+		}
 	}
 	if position != nil {
 		tm.FrontMatter["Position"] = position.Name
@@ -124,11 +125,9 @@ func preCheck(page notion.Page, config Markdown, tm *tomarkdown.ToMarkdown) (*os
 			fmt.Errorf("couldn't create content folder: %s", err)
 		}
 		// todo file name prop should have default value !!
-		return os.Create(filepath.Join(savePath, generateSettingFilename(tomarkdown.ConvertRichText(fileName), page.CreatedTime, config)))
+		return os.Create(filepath.Join(savePath, generateSettingFilename(tomarkdown.ConvertRichText(pageName), page.CreatedTime, config)))
 	}
-	if len(fileName) > 0 && tomarkdown.ConvertRichText(fileName) == "config.yaml" {
-		tm.FrontMatter["IsSetting"] = true
-	}
+
 	return nil, nil
 }
 
