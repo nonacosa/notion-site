@@ -17,12 +17,23 @@ func filterFromConfig(config Notion) *notion.DatabaseQueryFilter {
 	}
 
 	properties := make([]notion.DatabaseQueryFilter, len(config.FilterValue))
-	for i, _ := range config.FilterValue {
+	//for i, _ := range config.FilterValue {
+	//	properties[i] = notion.DatabaseQueryFilter{
+	//		Property: config.FilterProp,
+	//		//TODO Select: &notion.SelectDatabaseQueryFilter{
+	//		//	Equals: val,
+	//		//},
+	//	}
+	//}
+
+	for i, v := range config.FilterValue {
 		properties[i] = notion.DatabaseQueryFilter{
 			Property: config.FilterProp,
-			//TODO Select: &notion.SelectDatabaseQueryFilter{
-			//	Equals: val,
-			//},
+			DatabaseQueryPropertyFilter: notion.DatabaseQueryPropertyFilter{
+				Select: &notion.SelectDatabaseQueryFilter{
+					Equals: v,
+				},
+			},
 		}
 	}
 
@@ -37,7 +48,7 @@ func queryDatabase(client *notion.Client, config Notion) (notion.DatabaseQueryRe
 	defer spin.Stop()
 
 	query := &notion.DatabaseQuery{
-		// TODO Filter:   filterFromConfig(config),
+		Filter:   filterFromConfig(config),
 		PageSize: 100,
 	}
 	return client.QueryDatabase(context.Background(), config.DatabaseID, query)
