@@ -92,7 +92,7 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 		" ", "-",
 	)
 	tm.ImgSavePath = filepath.Join(tm.ArticleFolderPath, "media")
-	tm.ImgVisitPath = filepath.Join(config.ImagePublicLink, url.PathEscape(pageName))
+	tm.ImgVisitPath = filepath.Join("p", url.PathEscape(pageName), "media")
 	tm.ContentTemplate = config.Template
 	// todo edit frontMatter
 	tm.WithFrontMatter(page)

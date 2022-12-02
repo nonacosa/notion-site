@@ -18,7 +18,6 @@ type Notion struct {
 type Markdown struct {
 	ShortcodeSyntax string `yaml:"shortcodeSyntax"` // hugo,hexo,vuepress
 	PostSavePath    string `yaml:"postSavePath"`
-	MediaSavePath   string `yaml:"mediaSavePath"`
 	ImagePublicLink string `yaml:"imagePublicLink"`
 
 	// Optional:
@@ -42,7 +41,6 @@ func DefaultConfigInit() error {
 		Markdown: Markdown{
 			ShortcodeSyntax: "hugo",
 			PostSavePath:    "posts/notion",
-			MediaSavePath:   "static/images/notion",
 			ImagePublicLink: "/images/notion",
 		},
 	}
