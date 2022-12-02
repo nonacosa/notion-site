@@ -7,18 +7,12 @@ import (
 	"unicode"
 )
 
-const Baidu = "github.com"
 const Gist = "gist.github.com"
 const Twitter = "twitter.com"
 const Bilibili = "bilibili.com"
 const RegexBili = `(?<=\.com\/video\/).*(?=\/)`
-
-func FindTextPS(ori string, pre string, suf string) string {
-	ori = FindTextP(ori, pre)
-	sufI := strings.Index(ori, suf)
-	ori = ori[:sufI]
-	return ori
-}
+const RegexYoutube = `(?<=\.com\/watch\?v=).*`
+const RegexTwitter = `(?<=status\/).*(?=\??)`
 
 func FindTextP(ori string, pre string) string {
 	ori = strings.ReplaceAll(strings.TrimSpace(ori), "https://", "")

@@ -537,7 +537,7 @@ func (tm *ToMarkdown) injectVideoInfo(video *notion.VideoBlock, extra *map[strin
 	var id, plat string
 	if strings.Contains(videoUrl, "youtube") {
 		plat = "youtube"
-		id = videoUrl[strings.Index(videoUrl, "?v=")+3:]
+		id = utils.FindUrlContext(utils.RegexYoutube, videoUrl)
 	}
 	(*extra)["Plat"] = plat
 	(*extra)["Id"] = id
@@ -554,8 +554,7 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 			plat = "bilibili"
 		}
 		if strings.Contains(url, utils.Twitter) {
-			url = url[strings.Index(url, "status/")+7:]
-			url = utils.FindTextP(url, "status/")
+			url = utils.FindUrlContext(utils.RegexTwitter, url)
 			plat = "twitter"
 		}
 		if strings.Contains(url, utils.Gist) {
