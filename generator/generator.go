@@ -74,7 +74,12 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 	var err error
 	f, err = preCheck(page, config, tm)
 	if f == nil {
-		f, err = os.Create(filepath.Join(config.PostSavePath, generateArticleFilename(pageName, page.CreatedTime, config)))
+		path := filepath.Join(config.PostSavePath, generateArticleFolderName(pageName, page.CreatedTime, config), "index.md")
+		if err := os.MkdirAll(path, 0755); err != nil {
+			fmt.Errorf("couldn't create content folder: %s", err)
+		}
+		tm.ArticleFolderPath = path
+		f, err = os.Create(filepath.Join(path, "index.md"))
 	}
 	if err != nil {
 		return fmt.Errorf("error create file: %s", err)
@@ -86,7 +91,7 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 		),
 		" ", "-",
 	)
-	tm.ImgSavePath = filepath.Join(config.MediaSavePath, pageName)
+	tm.ImgSavePath = filepath.Join(tm.ArticleFolderPath, "media")
 	tm.ImgVisitPath = filepath.Join(config.ImagePublicLink, url.PathEscape(pageName))
 	tm.ContentTemplate = config.Template
 	// todo edit frontMatter
@@ -146,6 +151,22 @@ func generateArticleFilename(title string, date time.Time, config Markdown) stri
 	}
 
 	return escapedFilename
+}
+
+func generateArticleFolderName(title string, date time.Time, config Markdown) string {
+	escapedTitle := strings.ReplaceAll(
+		strings.ToValidUTF8(
+			strings.ToLower(strings.TrimSpace(title)),
+			"",
+		),
+		" ", "-",
+	)
+
+	if config.GroupByMonth {
+		return filepath.Join(date.Format("2006-01-02"), escapedTitle)
+	}
+
+	return escapedTitle
 }
 
 func generateSettingFilename(title string, date time.Time, config Markdown) string {

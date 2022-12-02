@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/dlclark/regexp2"
 	"reflect"
 	"strings"
 	"unicode"
@@ -10,6 +11,7 @@ const Baidu = "github.com"
 const Gist = "gist.github.com"
 const Twitter = "twitter.com"
 const Bilibili = "bilibili.com"
+const RegexBili = `(?<=\.com\/video\/).*(?=\/)`
 
 func FindTextPS(ori string, pre string, suf string) string {
 	ori = FindTextP(ori, pre)
@@ -24,6 +26,16 @@ func FindTextP(ori string, pre string) string {
 	preI := strings.Index(ori, pre)
 	ori = ori[preI+len(pre):]
 	return ori
+}
+
+func FindUrlContext(regex string, url string) string {
+	var res string
+	reg, _ := regexp2.Compile(regex, 0)
+	m, _ := reg.FindStringMatch(url)
+	if m != nil {
+		res = m.String()
+	}
+	return res
 }
 
 func CamelCaseToUnderscore(s string) string {

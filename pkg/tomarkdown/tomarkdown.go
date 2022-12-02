@@ -66,11 +66,12 @@ type MediaBlock struct {
 
 type ToMarkdown struct {
 	// todo
-	FrontMatter     map[string]interface{}
-	ContentBuffer   *bytes.Buffer
-	ImgSavePath     string
-	ImgVisitPath    string
-	ContentTemplate string
+	FrontMatter       map[string]interface{}
+	ContentBuffer     *bytes.Buffer
+	ImgSavePath       string
+	ImgVisitPath      string
+	ArticleFolderPath string
+	ContentTemplate   string
 
 	extra map[string]interface{}
 }
@@ -549,7 +550,7 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 		url = "http://www.baidu.com"
 	} else {
 		if strings.Contains(url, utils.Bilibili) {
-			url = utils.FindTextP(url, "video/")
+			url = utils.FindUrlContext(utils.RegexBili, url)
 			plat = "bilibili"
 		}
 		if strings.Contains(url, utils.Twitter) {

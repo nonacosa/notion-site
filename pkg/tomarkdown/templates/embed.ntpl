@@ -1,16 +1,12 @@
-
 {{- if eq .Extra.Plat ""}}
-    {{"{{< iframe \""}}{{.Extra.Url}}{{"\" >}}"}}{{"\n"}}
+{{"{{< iframe \""}}{{.Extra.Url}}{{"\" >}}"}}{{"\n"}}
 {{end}}
-
 {{- if eq .Extra.Plat "bilibili"}}
-    {{"{{< bilibili "}}{{.Extra.Url}}{{" >}}"}}
+{{"{{< bilibili "}}{{.Extra.Url}}{{" >}}"}}
 {{end}}
-
 {{- if eq .Extra.Plat "twitter"}}
-   {{ `{{< tweet user="SanDiegoZoo" id="1512067081398673415" >}}` }}{{"\n"}}
+{{ `{{< tweet user="SanDiegoZoo" id="1512067081398673415" >}}` }}{{"\n"}}
 {{end}}
-
 {{- if eq .Extra.Plat "gist"}}
-    {{"{{< gist "}}{{.Extra.Url}}{{" >}}"}}{{"\n"}}
+{{"{{< gist "}}{{.Extra.Url}}{{" >}}"}}{{"\n"}}
 {{end}}
