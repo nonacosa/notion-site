@@ -791,7 +791,7 @@ func ConvertRich(t notion.RichText) string {
 				fmt.Sprintf("[%s](%s)", t.Text.Content, t.Text.Link.URL),
 			)
 		}
-		return fmt.Sprintf(emphFormat(t.Annotations), t.Text.Content)
+		return fmt.Sprintf(emphFormat(t.Annotations), strings.TrimSpace(t.Text.Content))
 	case notion.RichTextTypeEquation:
 	case notion.RichTextTypeMention:
 	}
@@ -810,11 +810,11 @@ func emphFormat(a *notion.Annotations) (s string) {
 
 	switch {
 	case a.Bold && a.Italic:
-		s = "***%s***"
+		s = " ***%s***"
 	case a.Bold:
-		s = "**%s**"
+		s = " **%s**"
 	case a.Italic:
-		s = "*%s*"
+		s = " *%s*"
 	}
 
 	if a.Underline {
