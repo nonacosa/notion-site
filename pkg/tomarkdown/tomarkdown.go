@@ -69,6 +69,7 @@ type ToMarkdown struct {
 	FrontMatter       map[string]interface{}
 	ContentBuffer     *bytes.Buffer
 	ImgSavePath       string
+	GallerySavePath   string
 	ImgVisitPath      string
 	ArticleFolderPath string
 	ContentTemplate   string
@@ -242,8 +243,11 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 
 		var err error
 		switch reflect.TypeOf(block) {
-		// todo image
 		case reflect.TypeOf(&notion.ImageBlock{}):
+			act, folder := tm.GalleryAction(blocks, index)
+			if act == "skip" || act == "write" {
+				tm.GallerySavePath = filepath.Join(tm.ImgSavePath, folder)
+			}
 			err = tm.downloadMedia(block.(*notion.ImageBlock))
 		//todo hugo
 		case reflect.TypeOf(&notion.BookmarkBlock{}):
@@ -293,12 +297,12 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			addMoreTag = tm.ContentBuffer.Len() > 60
 			hasMoreTag = true
 		}
-
-		if tm.GalleryAction(blocks, index) == "skip" {
+		act, _ := tm.GalleryAction(blocks, index)
+		if act == "skip" {
 			continue
 		}
 
-		if tm.GalleryAction(blocks, index) == "write" {
+		if act == "write" {
 			currentBlockType = "gallery"
 		}
 
@@ -314,36 +318,36 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 	return nil
 }
 
-func (tm *ToMarkdown) GalleryAction(blocks []notion.Block, i int) string {
+func (tm *ToMarkdown) GalleryAction(blocks []notion.Block, i int) (string, string) {
 	imageType := reflect.TypeOf(&notion.ImageBlock{})
 	if tm.FrontMatter["Type"] != "gallery" {
-		return "nothing"
+		return "nothing", ""
 	}
 	if reflect.TypeOf(blocks[i]) != imageType {
-		return "noting"
+		return "noting", ""
 	}
 	if len(blocks) == 1 {
-		return "noting"
+		return "noting", ""
 	}
 	if i == 0 && imageType == reflect.TypeOf(blocks[i+1]) {
-		return "skip"
+		return "skip", "gallery"
 	}
 	if i == len(blocks)-1 && imageType == reflect.TypeOf(blocks[i-1]) {
-		return "write"
+		return "write", "gallery"
 	}
 
-	if imageType != reflect.TypeOf(blocks[i-1]) {
-		return "skip"
+	if imageType != reflect.TypeOf(blocks[i-1]) && imageType == reflect.TypeOf(blocks[i]) && imageType == reflect.TypeOf(blocks[i+1]) {
+		return "skip", "gallery"
 	}
 
 	if imageType == reflect.TypeOf(blocks[i-1]) && imageType == reflect.TypeOf(blocks[i+1]) {
-		return "skip"
+		return "skip", "gallery"
 	}
 	if imageType == reflect.TypeOf(blocks[i-1]) && imageType != reflect.TypeOf(blocks[i+1]) {
-		return "write"
+		return "write", "gallery"
 	}
 
-	return "notion"
+	return "notion", ""
 }
 
 // GenBlock notion to hugo shortcodes template
@@ -419,12 +423,18 @@ func (tm *ToMarkdown) downloadImage(media notion.ImageBlock) error {
 func (tm *ToMarkdown) downloadMedia(dynamicMedia any) error {
 
 	download := func(imgURL string) (string, error) {
+		var savePath string
+		savePath = tm.ImgSavePath
+		if tm.GallerySavePath != "" {
+			savePath = tm.GallerySavePath
+		}
 		resp, err := http.Get(imgURL)
 		if err != nil {
 			return "", err
 		}
 
-		imgFilename, err := tm.saveTo(resp.Body, imgURL, tm.ImgSavePath)
+		imgFilename, err := tm.saveTo(resp.Body, imgURL, savePath)
+		tm.GallerySavePath = ""
 		if err != nil {
 			return "", err
 		}

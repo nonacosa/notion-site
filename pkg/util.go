@@ -10,7 +10,7 @@ import (
 const Gist = "gist.github.com"
 const Twitter = "twitter.com"
 const Bilibili = "bilibili.com"
-const RegexBili = `(?<=\.com\/video\/).*(?=\/)`
+const RegexBili = `((?<=\.com\/video\/).*(?=\/))|((?<=bvid=).*(?=&cid?))`
 const RegexYoutube = `(?<=\.com\/watch\?v=).*`
 const RegexTwitter = `(?<=status\/).*(?=\??)`
 
