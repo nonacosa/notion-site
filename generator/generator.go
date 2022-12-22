@@ -33,7 +33,6 @@ func Run(config Config) error {
 	changed := 0 // number of article status changed
 	for i, page := range q.Results {
 		fmt.Printf("-- Article [%d/%d] -- %s \n", i+1, len(q.Results), page.URL)
-
 		// Get page blocks tree
 		blocks, err := queryBlockChildren(client, page.ID)
 		if err != nil {

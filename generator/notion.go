@@ -17,14 +17,6 @@ func filterFromConfig(config Notion) *notion.DatabaseQueryFilter {
 	}
 
 	properties := make([]notion.DatabaseQueryFilter, len(config.FilterValue))
-	//for i, _ := range config.FilterValue {
-	//	properties[i] = notion.DatabaseQueryFilter{
-	//		Property: config.FilterProp,
-	//		//TODO Select: &notion.SelectDatabaseQueryFilter{
-	//		//	Equals: val,
-	//		//},
-	//	}
-	//}
 
 	for i, v := range config.FilterValue {
 		properties[i] = notion.DatabaseQueryFilter{
@@ -122,6 +114,7 @@ func retrieveBlockChildren(client *notion.Client, blockID string) (blocks []noti
 		if !block.HasChildren() {
 			continue
 		}
+
 		switch blockType {
 		case reflect.TypeOf(&notion.ParagraphBlock{}):
 			block.(*notion.ParagraphBlock).Children, err = retrieveBlockChildren(client, block.ID())
@@ -168,11 +161,12 @@ func changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
 		Select: &notion.SelectOptions{
 			Name: config.PublishedValue,
 		},
+		// publishDate
 	}
 
 	_, err := client.UpdatePage(context.Background(), p.ID,
 		notion.UpdatePageParams{
-			//TODO DatabasePageProperties: &updatedProps,
+			DatabasePageProperties: updatedProps,
 		},
 	)
 	if err != nil {

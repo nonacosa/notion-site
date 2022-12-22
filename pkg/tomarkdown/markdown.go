@@ -52,8 +52,9 @@ var (
 
 type MdBlock struct {
 	notion.Block
-	Depth int
-	Extra map[string]interface{}
+	children []notion.Block
+	Depth    int
+	Extra    map[string]interface{}
 }
 
 type MediaBlock struct {
@@ -79,21 +80,21 @@ type ToMarkdown struct {
 
 type FrontMatter struct {
 	//Image         interface{}   `yaml:",flow"`
-	Title         interface{}   `yaml:",flow"`
-	Status        interface{}   `yaml:",flow"`
-	Position      interface{}   `yaml:",flow"`
-	Categories    []interface{} `yaml:",flow"`
-	Tags          []interface{} `yaml:",flow"`
-	Keywords      []interface{} `yaml:",flow"`
-	CreateAt      interface{}   `yaml:",flow"`
-	Author        interface{}   `yaml:",flow"`
-	Date          interface{}   `yaml:",flow"`
-	Lastmod       interface{}   `yaml:",flow"`
-	Description   interface{}   `yaml:",flow"`
-	Draft         interface{}   `yaml:",flow"`
-	ExpiryDate    interface{}   `yaml:",flow"`
-	PublishDate   interface{}   `yaml:",flow"`
-	Show_comments interface{}   `yaml:",flow"`
+	Title      interface{}   `yaml:",flow"`
+	Status     interface{}   `yaml:",flow"`
+	Position   interface{}   `yaml:",flow"`
+	Categories []interface{} `yaml:",flow"`
+	Tags       []interface{} `yaml:",flow"`
+	Keywords   []interface{} `yaml:",flow"`
+	CreateAt   interface{}   `yaml:",flow"`
+	Author     interface{}   `yaml:",flow"`
+	//Date          interface{}   `yaml:",flow"`
+	Lastmod       interface{} `yaml:",flow"`
+	Description   interface{} `yaml:",flow"`
+	Draft         interface{} `yaml:",flow"`
+	ExpiryDate    interface{} `yaml:",flow"`
+	PublishDate   interface{} `yaml:",flow"`
+	Show_comments interface{} `yaml:",flow"`
 	//Calculate Chinese word count accurately. Default is true
 	IsCJKLanguage interface{} `yaml:",flow"`
 	Slug          interface{} `yaml:",flow"`
@@ -108,7 +109,6 @@ func New() *ToMarkdown {
 }
 
 func (tm *ToMarkdown) WithFrontMatter(page notion.Page) {
-	// todo image cover to image frontMatter
 	tm.injectFrontMatterCover(page.Cover)
 	pageProps := page.Properties.(notion.DatabasePageProperties)
 	for fmKey, property := range pageProps {
@@ -212,6 +212,7 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 
 	hasMoreTag := false
 	for index, block := range blocks {
+		var addMoreTag = false
 		currentBlockType = utils.GetBlockType(block)
 
 		if tm.shouldSkipRender(reflect.TypeOf(block)) {
@@ -230,71 +231,28 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 		}
 		mdb.Extra["SameBlockIdx"] = sameBlockIdx
 
+		var generate = func(more bool) error {
+			if err := tm.GenBlock(currentBlockType, mdb, addMoreTag, false); err != nil {
+				return err
+			}
+			lastBlockType = reflect.TypeOf(block)
+			fmt.Println(fmt.Sprintf("Processing the %d th %s tpye block  -> %s ", index, reflect.TypeOf(block), block.ID()))
+			return nil
+		}
+
 		if tm.FrontMatter["IsSetting"] == true {
 			if reflect.TypeOf(block) == reflect.TypeOf(&notion.CodeBlock{}) {
-				if err := tm.GenBlock("setting", mdb, false, true); err != nil {
-					return err
-				}
-				lastBlockType = reflect.TypeOf(block)
-				fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, reflect.TypeOf(block), block.ID()))
+				generate(false)
 				continue
 			}
 		}
 
-		var err error
-		switch reflect.TypeOf(block) {
-		case reflect.TypeOf(&notion.ImageBlock{}):
-			act, folder := tm.GalleryAction(blocks, index)
-			if act == "skip" || act == "write" {
-				tm.GallerySavePath = filepath.Join(tm.ImgSavePath, folder)
-			}
-			err = tm.downloadMedia(block.(*notion.ImageBlock))
-		//todo hugo
-		case reflect.TypeOf(&notion.BookmarkBlock{}):
-			err = tm.injectBookmarkInfo(block.(*notion.BookmarkBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.VideoBlock{}):
-			err = tm.injectVideoInfo(block.(*notion.VideoBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.FileBlock{}):
-			err = tm.downloadMedia(block.(*notion.FileBlock))
-			err = tm.injectFileInfo(block.(*notion.FileBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.LinkPreviewBlock{}):
-			err = tm.todo(block.(*notion.LinkPreviewBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.LinkToPageBlock{}):
-			err = tm.todo(block.(*notion.LinkToPageBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.EmbedBlock{}):
-			err = tm.injectEmbedInfo(block.(*notion.EmbedBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.CalloutBlock{}):
-			err = tm.injectCalloutInfo(block.(*notion.CalloutBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.BreadcrumbBlock{}):
-			err = tm.todo(block.(*notion.BreadcrumbBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.ChildDatabaseBlock{}):
-			err = tm.todo(block.(*notion.ChildDatabaseBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.ChildPageBlock{}):
-			err = tm.todo(block.(*notion.ChildPageBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.PDFBlock{}):
-			err = tm.downloadMedia(block.(*notion.PDFBlock))
-			err = tm.injectFileInfo(block.(*notion.PDFBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.SyncedBlock{}):
-			err = tm.todo(block.(*notion.SyncedBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.TemplateBlock{}):
-			err = tm.todo(block.(*notion.TemplateBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.AudioBlock{}):
-			err = tm.injectFileInfo(block.(*notion.AudioBlock), &mdb.Extra)
-		case reflect.TypeOf(&notion.ToDoBlock{}):
-			mdb.Block = block.(*notion.ToDoBlock)
-		case reflect.TypeOf(&notion.TableBlock{}):
-			mdb.Block = block.(*notion.TableBlock)
-		//case reflect.TypeOf(&notion.ParagraphBlock{}):
-		//	mdb.Block = block.(*notion.ParagraphBlock)
-		//	tm.injectParagraphInfo(block.(*notion.ParagraphBlock), &mdb.Extra)
-		default:
-			// do something
-		}
+		err := tm.inject(&mdb, blocks, index)
 
 		if err != nil {
 			return err
 		}
-		addMoreTag := false
+
 		// todo configurable
 		if tm.ContentBuffer.Len() > 60 && !hasMoreTag {
 			addMoreTag = tm.ContentBuffer.Len() > 60
@@ -309,14 +267,7 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			currentBlockType = "gallery"
 		}
 
-		// todo the last image is image and last image is image
-
-		if err := tm.GenBlock(currentBlockType, mdb, addMoreTag, false); err != nil {
-			return err
-		}
-		lastBlockType = reflect.TypeOf(block)
-		fmt.Println(fmt.Sprintf("Processing the %b th block ↓ type -> %s \n %s ", index, reflect.TypeOf(block), block.ID()))
-
+		generate(addMoreTag)
 	}
 	return nil
 }
@@ -330,7 +281,7 @@ func (tm *ToMarkdown) GalleryAction(blocks []notion.Block, i int) (string, strin
 		return "noting", ""
 	}
 	if len(blocks) == 1 {
-		return "noting", ""
+		return "nothing", ""
 	}
 	if i == 0 && imageType == reflect.TypeOf(blocks[i+1]) {
 		return "skip", "gallery"
@@ -350,7 +301,7 @@ func (tm *ToMarkdown) GalleryAction(blocks []notion.Block, i int) (string, strin
 		return "write", "gallery"
 	}
 
-	return "notion", ""
+	return "nothing", ""
 }
 
 // GenBlock notion to hugo shortcodes template
@@ -366,8 +317,6 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 
 	t := template.New(fmt.Sprintf("%s.ntpl", bType)).Funcs(funcs)
 	tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", bType))
-	//t := template.New(fmt.Sprintf("%s.ntpl", "log")).Funcs(funcs)
-	//tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", "log"))
 	if err != nil {
 		return err
 	}
@@ -385,7 +334,8 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 
 		if block.HasChildren() {
 			block.Depth++
-			return tm.GenContentBlocks(getChildrenBlocks(block), block.Depth)
+			getChildrenBlocks(&block)
+			return tm.GenContentBlocks(block.children, block.Depth)
 		}
 	}
 
@@ -466,6 +416,22 @@ func (tm *ToMarkdown) downloadMedia(dynamicMedia any) error {
 	}
 	return err
 
+}
+
+func (tm *ToMarkdown) downloadFrontMatterImage(url string) string {
+
+	image := &notion.FileBlock{
+		Type: "external",
+		File: nil,
+		External: &notion.FileExternal{
+			URL: url,
+		},
+	}
+	if err := tm.downloadMedia(image); err != nil {
+		return ""
+	}
+
+	return image.External.URL
 }
 
 func (tm *ToMarkdown) saveTo(reader io.Reader, rawURL, distDir string) (string, error) {
@@ -597,11 +563,6 @@ func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map
 	return nil
 }
 
-func (tm *ToMarkdown) todo(video any, extra *map[string]interface{}) error {
-
-	return nil
-}
-
 // injectFrontMatter convert the prop to the front-matter
 func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePageProperty) {
 	var fmv interface{}
@@ -692,20 +653,9 @@ func (tm *ToMarkdown) injectFrontMatterCover(cover *notion.Cover) {
 	}
 }
 
-func (tm *ToMarkdown) downloadFrontMatterImage(url string) string {
+func (tm *ToMarkdown) todo(video any, extra *map[string]interface{}) error {
 
-	image := &notion.FileBlock{
-		Type: "external",
-		File: nil,
-		External: &notion.FileExternal{
-			URL: url,
-		},
-	}
-	if err := tm.downloadMedia(image); err != nil {
-		return ""
-	}
-
-	return image.External.URL
+	return nil
 }
 
 func ConvertTable(rows []notion.Block) string {
@@ -774,6 +724,9 @@ func ConvertRich(t notion.RichText) string {
 				fmt.Sprintf("[%s](%s)", t.Text.Content, t.Text.Link.URL),
 			)
 		}
+		if strings.TrimSpace(t.Text.Content) == "" {
+			return ""
+		}
 		return fmt.Sprintf(emphFormat(t.Annotations), strings.TrimSpace(t.Text.Content))
 	case notion.RichTextTypeEquation:
 	case notion.RichTextTypeMention:
@@ -786,11 +739,9 @@ func emphFormat(a *notion.Annotations) (s string) {
 	if a == nil {
 		return
 	}
-
 	if a.Code {
 		return "`%s`"
 	}
-
 	switch {
 	case a.Bold && a.Italic:
 		s = " ***%s***"
@@ -799,19 +750,21 @@ func emphFormat(a *notion.Annotations) (s string) {
 	case a.Italic:
 		s = " *%s*"
 	}
-
 	if a.Underline {
 		s = "__" + s + "__"
 	} else if a.Strikethrough {
 		s = "~~" + s + "~~"
 	}
-
-	// TODO: color
 	s = textColor(a, s)
 	return s
 }
 
 func textColor(a *notion.Annotations, text string) (s string) {
+	s = text
+	var color = ""
+	if a.Color == "default" {
+		return
+	}
 	colors := map[string]string{}
 	colors["gray"] = "rgba(120, 119, 116, 1)"
 	colors["brown"] = "rgba(159, 107, 83, 1)"
@@ -832,11 +785,7 @@ func textColor(a *notion.Annotations, text string) (s string) {
 	backgroundColors["purble"] = "rgba(244, 240, 247, 0.8)"
 	backgroundColors["pink"] = "rgba(249, 238, 243, 0.8)"
 	backgroundColors["red"] = "rgba(253, 235, 236, 1)"
-	s = text
-	var color = ""
-	if a.Color == "default" {
-		return
-	}
+
 	if strings.Contains(string(a.Color), "_background") {
 		parts := strings.Split(string(a.Color), "_")
 		color = parts[0]
@@ -848,35 +797,83 @@ func textColor(a *notion.Annotations, text string) (s string) {
 	return
 }
 
-func getChildrenBlocks(block MdBlock) []notion.Block {
+func getChildrenBlocks(block *MdBlock) {
 	switch reflect.TypeOf(block.Block) {
 	case reflect.TypeOf(&notion.QuoteBlock{}):
-		return block.Block.(*notion.QuoteBlock).Children
+		block.children = block.Block.(*notion.QuoteBlock).Children
 	case reflect.TypeOf(&notion.ToggleBlock{}):
-		return block.Block.(*notion.ParagraphBlock).Children
+		block.children = block.Block.(*notion.ParagraphBlock).Children
 	case reflect.TypeOf(&notion.ParagraphBlock{}):
-		return block.Block.(*notion.CalloutBlock).Children
+		block.children = block.Block.(*notion.CalloutBlock).Children
 	case reflect.TypeOf(&notion.CalloutBlock{}):
-		return block.Block.(*notion.BulletedListItemBlock).Children
+		block.children = block.Block.(*notion.BulletedListItemBlock).Children
 	case reflect.TypeOf(&notion.BulletedListItemBlock{}):
-		return block.Block.(*notion.QuoteBlock).Children
+		block.children = block.Block.(*notion.QuoteBlock).Children
 	case reflect.TypeOf(&notion.NumberedListItemBlock{}):
-		return block.Block.(*notion.NumberedListItemBlock).Children
+		block.children = block.Block.(*notion.NumberedListItemBlock).Children
 	case reflect.TypeOf(&notion.ToDoBlock{}):
-		return block.Block.(*notion.ToDoBlock).Children
+		block.children = block.Block.(*notion.ToDoBlock).Children
 	case reflect.TypeOf(&notion.CodeBlock{}):
-		return block.Block.(*notion.CodeBlock).Children
+		block.children = block.Block.(*notion.CodeBlock).Children
 	case reflect.TypeOf(&notion.CodeBlock{}):
-		return block.Block.(*notion.ColumnBlock).Children
-	case reflect.TypeOf(&notion.ColumnListBlock{}):
-		//todo return block.block.(*notion.ColumnListBlock).Children
+		block.children = block.Block.(*notion.ColumnBlock).Children
+	//case reflect.TypeOf(&notion.ColumnListBlock{}):
+	//	return block.Block.(*notion.ColumnListBlock).Children
 	case reflect.TypeOf(&notion.TableBlock{}):
-		return block.Block.(*notion.TableBlock).Children
+		block.children = block.Block.(*notion.TableBlock).Children
 	case reflect.TypeOf(&notion.SyncedBlock{}):
-		return block.Block.(*notion.SyncedBlock).Children
+		block.children = block.Block.(*notion.SyncedBlock).Children
 	case reflect.TypeOf(&notion.TemplateBlock{}):
-		return block.Block.(*notion.TemplateBlock).Children
+		block.children = block.Block.(*notion.TemplateBlock).Children
 	}
 
-	return nil
+}
+
+func (tm *ToMarkdown) inject(mdb *MdBlock, blocks []notion.Block, index int) error {
+	var err error
+	block := mdb.Block
+	switch reflect.TypeOf(block) {
+	case reflect.TypeOf(&notion.ImageBlock{}):
+		act, folder := tm.GalleryAction(blocks, index)
+		if act == "skip" || act == "write" {
+			tm.GallerySavePath = filepath.Join(tm.ImgSavePath, folder)
+		}
+		err = tm.downloadMedia(block.(*notion.ImageBlock))
+	//todo hugo
+	case reflect.TypeOf(&notion.BookmarkBlock{}):
+		err = tm.injectBookmarkInfo(block.(*notion.BookmarkBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.VideoBlock{}):
+		err = tm.injectVideoInfo(block.(*notion.VideoBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.FileBlock{}):
+		err = tm.downloadMedia(block.(*notion.FileBlock))
+		err = tm.injectFileInfo(block.(*notion.FileBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.LinkPreviewBlock{}):
+		err = tm.todo(block.(*notion.LinkPreviewBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.LinkToPageBlock{}):
+		err = tm.todo(block.(*notion.LinkToPageBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.EmbedBlock{}):
+		err = tm.injectEmbedInfo(block.(*notion.EmbedBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.CalloutBlock{}):
+		err = tm.injectCalloutInfo(block.(*notion.CalloutBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.BreadcrumbBlock{}):
+		err = tm.todo(block.(*notion.BreadcrumbBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.ChildDatabaseBlock{}):
+		err = tm.todo(block.(*notion.ChildDatabaseBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.ChildPageBlock{}):
+		err = tm.todo(block.(*notion.ChildPageBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.PDFBlock{}):
+		err = tm.downloadMedia(block.(*notion.PDFBlock))
+		err = tm.injectFileInfo(block.(*notion.PDFBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.SyncedBlock{}):
+		err = tm.todo(block.(*notion.SyncedBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.TemplateBlock{}):
+		err = tm.todo(block.(*notion.TemplateBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.AudioBlock{}):
+		err = tm.injectFileInfo(block.(*notion.AudioBlock), &mdb.Extra)
+	case reflect.TypeOf(&notion.ToDoBlock{}):
+		mdb.Block = block.(*notion.ToDoBlock)
+	case reflect.TypeOf(&notion.TableBlock{}):
+		mdb.Block = block.(*notion.TableBlock)
+	}
+	return err
 }
