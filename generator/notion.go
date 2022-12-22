@@ -42,6 +42,32 @@ func filterFromConfig(config Notion) *notion.DatabaseQueryFilter {
 	}
 }
 
+func FindBlockChildrenCommentLoop(client *notion.Client, blockArr []notion.Block, cursor string) (blocks []notion.Comment, err error) {
+	for i := 0; i < len(blockArr); i++ {
+		query := notion.FindCommentsByBlockIDQuery{
+			BlockID:     blockArr[i].ID(),
+			StartCursor: cursor,
+			PageSize:    100,
+		}
+		res, err := client.FindCommentsByBlockID(context.Background(), query)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if len(res.Results) == 0 {
+			continue
+		}
+
+		blocks = append(blocks, res.Results...)
+		if !res.HasMore {
+			return blocks, nil
+		}
+		cursor = *res.NextCursor
+	}
+	return blocks, nil
+}
+
 func queryDatabase(client *notion.Client, config Notion) (notion.DatabaseQueryResponse, error) {
 	spin.Suffix = " Querying Notion database..."
 	spin.Start()
@@ -68,6 +94,7 @@ func retrieveBlockChildrenLoop(client *notion.Client, blockID, cursor string) (b
 			PageSize:    100,
 		}
 		res, err := client.FindBlockChildrenByID(context.Background(), blockID, query)
+
 		if err != nil {
 			return nil, err
 		}

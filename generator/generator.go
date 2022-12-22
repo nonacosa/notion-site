@@ -100,15 +100,7 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 		tm.EnableExtendedSyntax(config.ShortcodeSyntax)
 	}
 
-	//parentId := strings.ReplaceAll(page.Parent.DatabaseID, "-", "")
-
 	blocks, _ = syncMentionBlocks(client, blocks)
-
-	// save last update time
-	//websiteItemMeta.LastUpdate = page.LastEditedTime
-	//websiteItemJson, _ := json.Marshal(websiteItemMeta)
-
-	//storage.Save(fmt.Sprintf("%s_%s", parentId, page.ID), string(websiteItemJson))
 
 	return tm.GenerateTo(blocks, f)
 }

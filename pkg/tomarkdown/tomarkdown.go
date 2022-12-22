@@ -284,8 +284,11 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			mdb.Block = block.(*notion.ToDoBlock)
 		case reflect.TypeOf(&notion.TableBlock{}):
 			mdb.Block = block.(*notion.TableBlock)
+		//case reflect.TypeOf(&notion.ParagraphBlock{}):
+		//	mdb.Block = block.(*notion.ParagraphBlock)
+		//	tm.injectParagraphInfo(block.(*notion.ParagraphBlock), &mdb.Extra)
 		default:
-			print(1)
+			// do something
 		}
 
 		if err != nil {
@@ -387,37 +390,6 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 	}
 
 	return nil
-}
-
-func (tm *ToMarkdown) downloadImage(media notion.ImageBlock) error {
-	download := func(imgURL string) (string, error) {
-		resp, err := http.Get(imgURL)
-		if err != nil {
-			return "", err
-		}
-
-		imgFilename, err := tm.saveTo(resp.Body, imgURL, tm.ImgSavePath)
-		if err != nil {
-			return "", err
-		}
-		var convertWinPath = strings.ReplaceAll(filepath.Join(tm.ImgVisitPath, imgFilename), "\\", "/")
-
-		return convertWinPath, nil
-	}
-
-	var err error
-	//if media.Type == notion.FileTypeFile {
-	//	media.External.URL, err = download(media.External.URL)
-	//}
-	println(media.Type)
-	if media.Type == notion.FileTypeExternal {
-		media.External.URL, err = download(media.External.URL)
-	}
-	if media.Type == notion.FileTypeFile {
-		media.File.URL, err = download(media.File.URL)
-	}
-
-	return err
 }
 
 func (tm *ToMarkdown) downloadMedia(dynamicMedia any) error {
@@ -557,7 +529,7 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 	var plat = ""
 	url := embed.URL
 	if len(url) == 0 {
-		url = "http://www.baidu.com"
+		return nil
 	} else {
 		if strings.Contains(url, utils.Bilibili) {
 			url = utils.FindUrlContext(utils.RegexBili, url)
@@ -613,6 +585,7 @@ func (tm *ToMarkdown) injectFileInfo(file any, extra *map[string]interface{}) er
 	(*extra)["FileName"] = name
 	return nil
 }
+
 func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map[string]interface{}) error {
 	var text = ""
 	for _, richText := range callout.RichText {
@@ -834,8 +807,45 @@ func emphFormat(a *notion.Annotations) (s string) {
 	}
 
 	// TODO: color
-
+	s = textColor(a, s)
 	return s
+}
+
+func textColor(a *notion.Annotations, text string) (s string) {
+	colors := map[string]string{}
+	colors["gray"] = "rgba(120, 119, 116, 1)"
+	colors["brown"] = "rgba(159, 107, 83, 1)"
+	colors["orange"] = "rgba(217, 115, 13, 1)"
+	colors["yellow"] = "rgba(203, 145, 47, 1)"
+	colors["green"] = "rgba(68, 131, 97, 1)"
+	colors["blue"] = "rgba(51, 126, 169, 1)"
+	colors["purble"] = "rgba(144, 101, 176, 1)"
+	colors["pink"] = "rgba(193, 76, 138, 1)"
+	colors["red"] = "rgba(212, 76, 71, 1)"
+	backgroundColors := map[string]string{}
+	backgroundColors["gray"] = "rgba(241, 241, 239, 1)"
+	backgroundColors["brown"] = "rgba(244, 238, 238, 1)"
+	backgroundColors["orange"] = "rgba(251, 236, 221, 1)"
+	backgroundColors["yellow"] = "rgba(251, 243, 219, 1)"
+	backgroundColors["green"] = "rgba(237, 243, 236, 1)"
+	backgroundColors["blue"] = "rgba(231, 243, 248, 1)"
+	backgroundColors["purble"] = "rgba(244, 240, 247, 0.8)"
+	backgroundColors["pink"] = "rgba(249, 238, 243, 0.8)"
+	backgroundColors["red"] = "rgba(253, 235, 236, 1)"
+	s = text
+	var color = ""
+	if a.Color == "default" {
+		return
+	}
+	if strings.Contains(string(a.Color), "_background") {
+		parts := strings.Split(string(a.Color), "_")
+		color = parts[0]
+		s = fmt.Sprintf(`<span style="background-color: %s;">%s</span>`, backgroundColors[color], text)
+		return
+	}
+	color = string(a.Color)
+	s = fmt.Sprintf(`<span style="color: %s;">%s</span>`, colors[color], text)
+	return
 }
 
 func getChildrenBlocks(block MdBlock) []notion.Block {

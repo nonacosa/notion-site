@@ -54,3 +54,13 @@ func GetBlockType(block any) string {
 	blockType := strings.Replace(reflect.TypeOf(block).String(), "*notion.", "", -1)
 	return CamelCaseToUnderscore(strings.ReplaceAll(blockType, "Block", ""))
 }
+
+func Filter[T any](s []T, cond func(t T) bool) []T {
+	var res []T
+	for _, v := range s {
+		if cond(v) {
+			res = append(res, v)
+		}
+	}
+	return res
+}
