@@ -12,7 +12,8 @@ const Twitter = "twitter.com"
 const Bilibili = "bilibili.com"
 const RegexBili = `((?<=\.com\/video\/).*(?=\/))|((?<=bvid=).*(?=&cid?))`
 const RegexYoutube = `(?<=\.com\/watch\?v=).*`
-const RegexTwitter = `(?<=status\/).*(?=\??)`
+const RegexTwitterId = `(?<=status\/).*(?=\?)`
+const RegexTwitterUser = `(?<=com\/).*(?=\/status)`
 
 func FindTextP(ori string, pre string) string {
 	ori = strings.ReplaceAll(strings.TrimSpace(ori), "https://", "")

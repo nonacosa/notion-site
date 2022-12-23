@@ -502,8 +502,10 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 			plat = "bilibili"
 		}
 		if strings.Contains(url, utils.Twitter) {
-			url = utils.FindUrlContext(utils.RegexTwitter, url)
+			user := utils.FindUrlContext(utils.RegexTwitterUser, url)
+			url = utils.FindUrlContext(utils.RegexTwitterId, url)
 			plat = "twitter"
+			(*extra)["User"] = user
 		}
 		if strings.Contains(url, utils.Gist) {
 			url = strings.Join(strings.Split(utils.FindTextP(url, utils.Gist), "/"), " ")
