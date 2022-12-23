@@ -80,21 +80,21 @@ type ToMarkdown struct {
 
 type FrontMatter struct {
 	//Image         interface{}   `yaml:",flow"`
-	Title      interface{}   `yaml:",flow"`
-	Status     interface{}   `yaml:",flow"`
-	Position   interface{}   `yaml:",flow"`
-	Categories []interface{} `yaml:",flow"`
-	Tags       []interface{} `yaml:",flow"`
-	Keywords   []interface{} `yaml:",flow"`
-	CreateAt   interface{}   `yaml:",flow"`
-	Author     interface{}   `yaml:",flow"`
-	//Date          interface{}   `yaml:",flow"`
-	Lastmod       interface{} `yaml:",flow"`
-	Description   interface{} `yaml:",flow"`
-	Draft         interface{} `yaml:",flow"`
-	ExpiryDate    interface{} `yaml:",flow"`
-	PublishDate   interface{} `yaml:",flow"`
-	Show_comments interface{} `yaml:",flow"`
+	Title         interface{}   `yaml:",flow"`
+	Status        interface{}   `yaml:",flow"`
+	Position      interface{}   `yaml:",flow"`
+	Categories    []interface{} `yaml:",flow"`
+	Tags          []interface{} `yaml:",flow"`
+	Keywords      []interface{} `yaml:",flow"`
+	CreateAt      interface{}   `yaml:",flow"`
+	Author        interface{}   `yaml:",flow"`
+	IsTranslated  interface{}   `yaml:",flow"`
+	Lastmod       interface{}   `yaml:",flow"`
+	Description   interface{}   `yaml:",flow"`
+	Draft         interface{}   `yaml:",flow"`
+	ExpiryDate    interface{}   `yaml:",flow"`
+	PublishDate   interface{}   `yaml:",flow"`
+	Show_comments interface{}   `yaml:",flow"`
 	//Calculate Chinese word count accurately. Default is true
 	IsCJKLanguage interface{} `yaml:",flow"`
 	Slug          interface{} `yaml:",flow"`
@@ -115,6 +115,9 @@ func (tm *ToMarkdown) WithFrontMatter(page notion.Page) {
 		tm.injectFrontMatter(fmKey, property)
 	}
 	tm.FrontMatter["Title"] = ConvertRichText(pageProps["Name"].Title)
+	if strings.TrimSpace(ConvertRichText(pageProps["Title"].RichText)) != "" {
+		tm.FrontMatter["Title"] = strings.TrimSpace(ConvertRichText(pageProps["Title"].RichText))
+	}
 }
 
 func (tm *ToMarkdown) EnableExtendedSyntax(target string) {
@@ -184,7 +187,8 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
 	}
 	if err := mapstructure.Decode(tm.FrontMatter, &fm); err != nil {
 	}
-
+	// hugo open translate https://gohugo.io/variables/page/
+	fm.IsTranslated = true
 	// chinese character statistics
 	//fm.IsCJKLanguage = true
 	frontMatters, err := yaml.Marshal(fm)

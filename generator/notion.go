@@ -161,7 +161,14 @@ func changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
 		Select: &notion.SelectOptions{
 			Name: config.PublishedValue,
 		},
-		// publishDate
+	}
+
+	// update current update time
+	currentTime := mustParseDateTime(time.Now().Format("2006-01-02T15:04:05.999Z0"))
+	updatedProps["PublishDate"] = notion.DatabasePageProperty{
+		Date: &notion.Date{
+			Start: currentTime,
+		},
 	}
 
 	_, err := client.UpdatePage(context.Background(), p.ID,
@@ -174,4 +181,12 @@ func changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
 	}
 
 	return err == nil
+}
+
+func mustParseDateTime(value string) notion.DateTime {
+	dt, err := notion.ParseDateTime(value)
+	if err != nil {
+		panic(err)
+	}
+	return dt
 }
