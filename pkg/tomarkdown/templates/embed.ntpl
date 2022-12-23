@@ -10,3 +10,6 @@
 {{- if eq .Extra.Plat "gist"}}
 {{"{{< gist "}}{{.Extra.Url}}{{" >}}"}}{{"\n"}}
 {{end}}
+{{- if eq .Extra.Plat "Jsfiddle"}}
+{{"{{< jsfiddle url=\""}}{{.Extra.Url}}{{"\" >}}"}}{{"\n"}}
+{{end}}

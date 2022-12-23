@@ -501,6 +501,10 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 			url = utils.FindUrlContext(utils.RegexBili, url)
 			plat = "bilibili"
 		}
+		if strings.Contains(url, utils.Jsfiddle) {
+			url = utils.FindUrlContext(utils.RegexJsfiddle, url)
+			plat = "Jsfiddle"
+		}
 		if strings.Contains(url, utils.Twitter) {
 			user := utils.FindUrlContext(utils.RegexTwitterUser, url)
 			url = utils.FindUrlContext(utils.RegexTwitterId, url)
@@ -767,35 +771,12 @@ func textColor(a *notion.Annotations, text string) (s string) {
 	if a.Color == "default" {
 		return
 	}
-	colors := map[string]string{}
-	colors["gray"] = "rgba(120, 119, 116, 1)"
-	colors["brown"] = "rgba(159, 107, 83, 1)"
-	colors["orange"] = "rgba(217, 115, 13, 1)"
-	colors["yellow"] = "rgba(203, 145, 47, 1)"
-	colors["green"] = "rgba(68, 131, 97, 1)"
-	colors["blue"] = "rgba(51, 126, 169, 1)"
-	colors["purble"] = "rgba(144, 101, 176, 1)"
-	colors["pink"] = "rgba(193, 76, 138, 1)"
-	colors["red"] = "rgba(212, 76, 71, 1)"
-	backgroundColors := map[string]string{}
-	backgroundColors["gray"] = "rgba(241, 241, 239, 1)"
-	backgroundColors["brown"] = "rgba(244, 238, 238, 1)"
-	backgroundColors["orange"] = "rgba(251, 236, 221, 1)"
-	backgroundColors["yellow"] = "rgba(251, 243, 219, 1)"
-	backgroundColors["green"] = "rgba(237, 243, 236, 1)"
-	backgroundColors["blue"] = "rgba(231, 243, 248, 1)"
-	backgroundColors["purble"] = "rgba(244, 240, 247, 0.8)"
-	backgroundColors["pink"] = "rgba(249, 238, 243, 0.8)"
-	backgroundColors["red"] = "rgba(253, 235, 236, 1)"
 
+	var cssKey = "color"
 	if strings.Contains(string(a.Color), "_background") {
-		parts := strings.Split(string(a.Color), "_")
-		color = parts[0]
-		s = fmt.Sprintf(`<span style="background-color: %s;">%s</span>`, backgroundColors[color], text)
-		return
+		cssKey = "background-color"
 	}
-	color = string(a.Color)
-	s = fmt.Sprintf(`<span style="color: %s;">%s</span>`, colors[color], text)
+	s = fmt.Sprintf(`<span style="%s: %s;">%s</span>`, cssKey, ColorMap[color], text)
 	return
 }
 
