@@ -73,7 +73,7 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 	var err error
 	f, err = preCheck(page, config, tm)
 	if f == nil {
-		path := filepath.Join(config.PostSavePath, generateArticleFolderName(pageName, page.CreatedTime, config), "index.md")
+		path := filepath.Join(config.PostSavePath, generateArticleFolderName(pageName, page.CreatedTime, config))
 		if err := os.MkdirAll(path, 0755); err != nil {
 			fmt.Errorf("couldn't create content folder: %s", err)
 		}

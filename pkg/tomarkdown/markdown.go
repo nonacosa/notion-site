@@ -79,25 +79,25 @@ type ToMarkdown struct {
 }
 
 type FrontMatter struct {
-	//Image         interface{}   `yaml:",flow"`
-	Title         interface{}   `yaml:",flow"`
-	Status        interface{}   `yaml:",flow"`
-	Position      interface{}   `yaml:",flow"`
-	Categories    []interface{} `yaml:",flow"`
-	Tags          []interface{} `yaml:",flow"`
-	Keywords      []interface{} `yaml:",flow"`
-	CreateAt      interface{}   `yaml:",flow"`
-	Author        interface{}   `yaml:",flow"`
-	IsTranslated  interface{}   `yaml:",flow"`
-	Lastmod       interface{}   `yaml:",flow"`
-	Description   interface{}   `yaml:",flow"`
-	Draft         interface{}   `yaml:",flow"`
-	ExpiryDate    interface{}   `yaml:",flow"`
-	PublishDate   interface{}   `yaml:",flow"`
-	Show_comments interface{}   `yaml:",flow"`
+	Title        interface{}   `yaml:",flow"`
+	Status       interface{}   `yaml:",flow"`
+	Position     interface{}   `yaml:",flow"`
+	Categories   []interface{} `yaml:",flow"`
+	Tags         []interface{} `yaml:",flow"`
+	Keywords     []interface{} `yaml:",flow"`
+	CreateAt     interface{}   `yaml:",flow"`
+	Author       interface{}   `yaml:",flow"`
+	IsTranslated interface{}   `yaml:",flow"`
+	Lastmod      interface{}   `yaml:",flow"`
+	Description  interface{}   `yaml:",flow"`
+	Draft        interface{}   `yaml:",flow"`
+	ExpiryDate   interface{}   `yaml:",flow"`
+	//PublishDate   interface{}   `yaml:",flow"`
+	Show_comments interface{} `yaml:",flow"`
 	//Calculate Chinese word count accurately. Default is true
 	IsCJKLanguage interface{} `yaml:",flow"`
 	Slug          interface{} `yaml:",flow"`
+	Image         interface{} `yaml:",flow"`
 }
 
 func New() *ToMarkdown {
@@ -771,7 +771,6 @@ func emphFormat(a *notion.Annotations) (s string) {
 
 func textColor(a *notion.Annotations, text string) (s string) {
 	s = text
-	var color = ""
 	if a.Color == "default" {
 		return
 	}
@@ -780,7 +779,7 @@ func textColor(a *notion.Annotations, text string) (s string) {
 	if strings.Contains(string(a.Color), "_background") {
 		cssKey = "background-color"
 	}
-	s = fmt.Sprintf(`<span style="%s: %s;">%s</span>`, cssKey, ColorMap[color], text)
+	s = fmt.Sprintf(`<span style="%s: %s;">%s</span>`, cssKey, ColorMap[string(a.Color)], text)
 	return
 }
 
