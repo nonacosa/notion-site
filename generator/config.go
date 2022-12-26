@@ -41,7 +41,6 @@ func DefaultConfigInit() error {
 		Markdown: Markdown{
 			ShortcodeSyntax: "hugo",
 			PostSavePath:    "posts/notion",
-			ImagePublicLink: "/images/notion",
 		},
 	}
 	out, err := yaml.Marshal(defaultCfg)

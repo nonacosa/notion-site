@@ -95,9 +95,9 @@ type FrontMatter struct {
 	//PublishDate   interface{}   `yaml:",flow"`
 	Show_comments interface{} `yaml:",flow"`
 	//Calculate Chinese word count accurately. Default is true
-	IsCJKLanguage interface{} `yaml:",flow"`
-	Slug          interface{} `yaml:",flow"`
-	Image         interface{} `yaml:",flow"`
+	//IsCJKLanguage interface{} `yaml:",flow"`
+	Slug  interface{} `yaml:",flow"`
+	Image interface{} `yaml:",flow"`
 }
 
 func New() *ToMarkdown {
@@ -114,12 +114,18 @@ func (tm *ToMarkdown) WithFrontMatter(page notion.Page) {
 	for fmKey, property := range pageProps {
 		tm.injectFrontMatter(fmKey, property)
 	}
-	tm.FrontMatter["Title"] = ConvertRichText(pageProps["Name"].Title)
-	if strings.TrimSpace(ConvertRichText(pageProps["Title"].RichText)) != "" {
-		tm.FrontMatter["Title"] = strings.TrimSpace(ConvertRichText(pageProps["Title"].RichText))
-	}
+	tm.FrontMatter["Title"] = tm.GetPageName(page)
 }
 
+func (tm *ToMarkdown) GetPageName(page notion.Page) string {
+	var pageName string
+	pageProps := page.Properties.(notion.DatabasePageProperties)
+	pageName = ConvertRichText(pageProps["Name"].Title)
+	if strings.TrimSpace(ConvertRichText(pageProps["Title"].RichText)) != "" {
+		pageName = strings.TrimSpace(ConvertRichText(pageProps["Title"].RichText))
+	}
+	return pageName
+}
 func (tm *ToMarkdown) EnableExtendedSyntax(target string) {
 	tm.extra["ExtendedSyntaxEnabled"] = true
 	tm.extra["ExtendedSyntaxTarget"] = target

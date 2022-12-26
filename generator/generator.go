@@ -3,7 +3,6 @@ package generator
 import (
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -66,9 +65,11 @@ func Run(config Config) error {
 
 func generate(client *notion.Client, page notion.Page, blocks []notion.Block, config Markdown) error {
 	// Create file
-	pageName := tomarkdown.ConvertRichText(page.Properties.(notion.DatabasePageProperties)["Name"].Title)
+	//pageName := tomarkdown.ConvertRichText(page.Properties.(notion.DatabasePageProperties)["Name"].Title)
 	// Generate markdown content to the file
 	tm := tomarkdown.New()
+
+	pageName := tm.GetPageName(page)
 	var f *os.File
 	var err error
 	f, err = preCheck(page, config, tm)
@@ -83,6 +84,11 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 	if err != nil {
 		return fmt.Errorf("error create file: %s", err)
 	}
+
+	tm.ImgSavePath = filepath.Join(tm.ArticleFolderPath, "media")
+	tm.ImgVisitPath = "media"
+	tm.ContentTemplate = config.Template
+	tm.WithFrontMatter(page)
 	pageName = strings.ReplaceAll(
 		strings.ToValidUTF8(
 			strings.ToLower(strings.TrimSpace(pageName)),
@@ -90,11 +96,9 @@ func generate(client *notion.Client, page notion.Page, blocks []notion.Block, co
 		),
 		" ", "-",
 	)
-	tm.ImgSavePath = filepath.Join(tm.ArticleFolderPath, "media")
-	tm.ImgVisitPath = filepath.Join("p", url.PathEscape(pageName), "media")
-	tm.ContentTemplate = config.Template
+
 	// todo edit frontMatter
-	tm.WithFrontMatter(page)
+
 	if config.ShortcodeSyntax != "" {
 		tm.EnableExtendedSyntax(config.ShortcodeSyntax)
 	}
