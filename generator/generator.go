@@ -2,181 +2,101 @@ package generator
 
 import (
 	"fmt"
+	"github.com/dstotijn/go-notion"
 	"log"
 	"os"
-	"path/filepath"
 	"reflect"
-	"strings"
-	"time"
-
-	"github.com/pkwenda/notion-site/pkg/tomarkdown"
-
-	"github.com/dstotijn/go-notion"
 )
 
-func Run(config Config) error {
-	fmt.Printf("init save path %s", config.Markdown.PostSavePath)
-	if err := os.MkdirAll(config.Markdown.PostSavePath, 0755); err != nil {
+type NotionSite struct {
+	api             *NotionAPI
+	tm              *ToMarkdown
+	files           *Files
+	config          Config
+	currentPage     notion.Page
+	currentPageProp *NotionProp
+	currentBlocks   []notion.Block
+}
+
+func NewNotionSite(api *NotionAPI, tm *ToMarkdown, files *Files, config Config) *NotionSite {
+	return &NotionSite{api: api, tm: tm, files: files, config: config}
+}
+
+func Run(ns *NotionSite) error {
+	fmt.Printf("init save path %s", ns.files.HomePath)
+	if err := ns.files.mkdirHomePath(); err != nil {
 		return fmt.Errorf("couldn't create content folder: %s", err)
 	}
-
 	// find database page
-	client := notion.NewClient(os.Getenv("NOTION_SECRET"))
-	q, err := queryDatabase(client, config.Notion)
+	q, err := ns.api.queryDatabase(ns.api.Client, ns.config.Notion)
 	if err != nil {
 		return fmt.Errorf("❌ Querying Notion database: %s", err)
 	}
 	fmt.Println("✔ Querying Notion database: Completed")
-
 	// fetch page children
 	changed := 0 // number of article status changed
 	for i, page := range q.Results {
 		fmt.Printf("-- Article [%d/%d] -- %s \n", i+1, len(q.Results), page.URL)
 		// Get page blocks tree
-		blocks, err := queryBlockChildren(client, page.ID)
+		blocks, err := ns.api.queryBlockChildren(ns.api.Client, page.ID)
 		if err != nil {
 			log.Println("❌ Getting blocks tree:", err)
 			continue
 		}
 		fmt.Println("✔ Getting blocks tree: Completed")
-
 		// Generate content to file
-		if err := generate(client, page, blocks, config.Markdown); err != nil {
+		if err := generate(ns, page, blocks); err != nil {
 			fmt.Println("❌ Generating blog post:", err)
 			continue
 		}
 		fmt.Println("✔ Generating blog post: Completed")
-
 		// Change status of blog post if desired
-		if changeStatus(client, page, config.Notion) {
+		if ns.api.changeStatus(ns.api.Client, page, ns.config.Notion) {
 			changed++
 		}
-
 	}
-
-	// Set GITHUB_ACTIONS info variables
-	// https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions
+	// Set GITHUB_ACTIONS info variables : https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
 		fmt.Printf("::set-output name=articles_published::%d\n", changed)
 	}
-
 	return nil
 }
 
-func generate(client *notion.Client, page notion.Page, blocks []notion.Block, config Markdown) error {
-	// Create file
-	//pageName := tomarkdown.ConvertRichText(page.Properties.(notion.DatabasePageProperties)["Name"].Title)
+func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) error {
 	// Generate markdown content to the file
-	tm := tomarkdown.New()
+	initNotionSite(ns, page)
 
-	pageName := tm.GetPageName(page)
-	var f *os.File
-	var err error
-	f, err = preCheck(page, config, tm)
-	if f == nil {
-		path := filepath.Join(config.PostSavePath, generateArticleFolderName(pageName, page.CreatedTime, config))
-		if err := os.MkdirAll(path, 0755); err != nil {
-			fmt.Errorf("couldn't create content folder: %s", err)
-		}
-		tm.ArticleFolderPath = path
-		f, err = os.Create(filepath.Join(path, "index.md"))
+	ns.files.mkdirPath(ns.files.FileFolderPath)
+	if !ns.currentPageProp.IsSetting() {
+		ns.tm.ContentTemplate = ns.config.Template
+		ns.tm.WithFrontMatter(ns.currentPage)
 	}
+	var err error
+	// save current io
+	ns.files.currentWriter, err = os.Create(ns.files.FilePath)
 	if err != nil {
 		return fmt.Errorf("error create file: %s", err)
 	}
 
-	tm.ImgSavePath = filepath.Join(tm.ArticleFolderPath, "media")
-	tm.ImgVisitPath = "media"
-	tm.ContentTemplate = config.Template
-	tm.WithFrontMatter(page)
-	pageName = strings.ReplaceAll(
-		strings.ToValidUTF8(
-			strings.ToLower(strings.TrimSpace(pageName)),
-			"",
-		),
-		" ", "-",
-	)
-
 	// todo edit frontMatter
-
-	if config.ShortcodeSyntax != "" {
-		tm.EnableExtendedSyntax(config.ShortcodeSyntax)
+	if ns.config.Markdown.ShortcodeSyntax != "" {
+		ns.tm.EnableExtendedSyntax(ns.config.Markdown.ShortcodeSyntax)
 	}
 
-	blocks, _ = syncMentionBlocks(client, blocks)
-
-	return tm.GenerateTo(blocks, f)
+	ns.currentBlocks, _ = syncMentionBlocks(ns.api.Client, blocks)
+	return ns.tm.GenerateTo(ns)
 }
 
-func preCheck(page notion.Page, config Markdown, tm *tomarkdown.ToMarkdown) (*os.File, error) {
-	var savePath = config.PostSavePath
-	var pageType = page.Properties.(notion.DatabasePageProperties)["Type"].Select
-	var position = page.Properties.(notion.DatabasePageProperties)["Position"].Select
-	var pageName = page.Properties.(notion.DatabasePageProperties)["Name"].Title
-	if pageType != nil {
-		if pageType.Name == "setting" {
-			tm.FrontMatter["IsSetting"] = true
-		}
-	}
-	if position != nil {
-		tm.FrontMatter["Position"] = position.Name
-		savePath = position.Name
-		if err := os.MkdirAll(savePath, 0755); err != nil {
-			fmt.Errorf("couldn't create content folder: %s", err)
-		}
-		// todo file name prop should have default value !!
-		return os.Create(filepath.Join(savePath, generateSettingFilename(tomarkdown.ConvertRichText(pageName), page.CreatedTime, config)))
-	}
+func initNotionSite(ns *NotionSite, page notion.Page) {
+	// set current origin page
+	ns.currentPage = page
+	// set current notion page prop
+	ns.currentPageProp = NewNotionProp(ns.currentPage)
+	ns.SetFileInfo(ns.currentPageProp.Position)
+	// set notion site files info
+	ns.tm.NotionProps = ns.currentPageProp
+	ns.tm.Files = ns.files
 
-	return nil, nil
-}
-
-func generateArticleFilename(title string, date time.Time, config Markdown) string {
-	escapedTitle := strings.ReplaceAll(
-		strings.ToValidUTF8(
-			strings.ToLower(strings.TrimSpace(title)),
-			"",
-		),
-		" ", "-",
-	)
-	escapedFilename := escapedTitle + ".md"
-
-	if config.GroupByMonth {
-		return filepath.Join(date.Format("2006-01-02"), escapedFilename)
-	}
-
-	return escapedFilename
-}
-
-func generateArticleFolderName(title string, date time.Time, config Markdown) string {
-	escapedTitle := strings.ReplaceAll(
-		strings.ToValidUTF8(
-			strings.ToLower(strings.TrimSpace(title)),
-			"",
-		),
-		" ", "-",
-	)
-
-	if config.GroupByMonth {
-		return filepath.Join(date.Format("2006-01-02"), escapedTitle)
-	}
-
-	return escapedTitle
-}
-
-func generateSettingFilename(title string, date time.Time, config Markdown) string {
-	name := strings.ReplaceAll(
-		strings.ToValidUTF8(
-			strings.ToLower(strings.TrimSpace(title)),
-			"",
-		),
-		" ", "-",
-	)
-
-	if config.GroupByMonth {
-		return filepath.Join(date.Format("2006-01-02"), name)
-	}
-	return name
 }
 
 // todo pref
@@ -191,13 +111,7 @@ func syncMentionBlocks(client *notion.Client, blocks []notion.Block) (retBlocks 
 				// todo mention .type = user
 				if rich.Type == "mention" {
 					// todo mention has many types !!! how to work ?
-					//if rich.Mention.Type == "page" {
-					//	pageId := rich.Mention.Page.ID
-					//	return queryBlockChildren(client, pageId)
-					//}
-					//if rich.Mention.Type == "user" {
-					//	_ = rich.Mention.User.ID
-					//}
+					println("??")
 				}
 			}
 		default:

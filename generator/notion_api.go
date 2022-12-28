@@ -5,19 +5,28 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/dstotijn/go-notion"
 	"log"
+	"os"
 	"reflect"
 	"time"
 )
 
 var spin = spinner.New(spinner.CharSets[14], time.Millisecond*100)
 
-func filterFromConfig(config Notion) *notion.DatabaseQueryFilter {
+type NotionAPI struct {
+	Client *notion.Client
+}
+
+func NewAPI() *NotionAPI {
+	return &NotionAPI{
+		Client: notion.NewClient(os.Getenv("NOTION_SECRET")),
+	}
+}
+
+func (api *NotionAPI) filterFromConfig(config Notion) *notion.DatabaseQueryFilter {
 	if config.FilterProp == "" || len(config.FilterValue) == 0 {
 		return nil
 	}
-
 	properties := make([]notion.DatabaseQueryFilter, len(config.FilterValue))
-
 	for i, v := range config.FilterValue {
 		properties[i] = notion.DatabaseQueryFilter{
 			Property: config.FilterProp,
@@ -28,13 +37,12 @@ func filterFromConfig(config Notion) *notion.DatabaseQueryFilter {
 			},
 		}
 	}
-
 	return &notion.DatabaseQueryFilter{
 		Or: properties,
 	}
 }
 
-func FindBlockChildrenCommentLoop(client *notion.Client, blockArr []notion.Block, cursor string) (blocks []notion.Comment, err error) {
+func (api *NotionAPI) FindBlockChildrenCommentLoop(client *notion.Client, blockArr []notion.Block, cursor string) (blocks []notion.Comment, err error) {
 	for i := 0; i < len(blockArr); i++ {
 		query := notion.FindCommentsByBlockIDQuery{
 			BlockID:     blockArr[i].ID(),
@@ -42,15 +50,12 @@ func FindBlockChildrenCommentLoop(client *notion.Client, blockArr []notion.Block
 			PageSize:    100,
 		}
 		res, err := client.FindCommentsByBlockID(context.Background(), query)
-
 		if err != nil {
 			return nil, err
 		}
-
 		if len(res.Results) == 0 {
 			continue
 		}
-
 		blocks = append(blocks, res.Results...)
 		if !res.HasMore {
 			return blocks, nil
@@ -60,26 +65,25 @@ func FindBlockChildrenCommentLoop(client *notion.Client, blockArr []notion.Block
 	return blocks, nil
 }
 
-func queryDatabase(client *notion.Client, config Notion) (notion.DatabaseQueryResponse, error) {
+func (api *NotionAPI) queryDatabase(client *notion.Client, config Notion) (notion.DatabaseQueryResponse, error) {
 	spin.Suffix = " Querying Notion database..."
 	spin.Start()
 	defer spin.Stop()
-
 	query := &notion.DatabaseQuery{
-		Filter:   filterFromConfig(config),
+		Filter:   api.filterFromConfig(config),
 		PageSize: 100,
 	}
 	return client.QueryDatabase(context.Background(), config.DatabaseID, query)
 }
 
-func queryBlockChildren(client *notion.Client, blockID string) (blocks []notion.Block, err error) {
+func (api *NotionAPI) queryBlockChildren(client *notion.Client, blockID string) (blocks []notion.Block, err error) {
 	spin.Suffix = " Fetching blocks tree..."
 	spin.Start()
 	defer spin.Stop()
-	return retrieveBlockChildren(client, blockID)
+	return api.retrieveBlockChildren(client, blockID)
 }
 
-func retrieveBlockChildrenLoop(client *notion.Client, blockID, cursor string) (blocks []notion.Block, err error) {
+func (api *NotionAPI) retrieveBlockChildrenLoop(client *notion.Client, blockID, cursor string) (blocks []notion.Block, err error) {
 	for {
 		query := &notion.PaginationQuery{
 			StartCursor: cursor,
@@ -103,8 +107,8 @@ func retrieveBlockChildrenLoop(client *notion.Client, blockID, cursor string) (b
 	}
 }
 
-func retrieveBlockChildren(client *notion.Client, blockID string) (blocks []notion.Block, err error) {
-	blocks, err = retrieveBlockChildrenLoop(client, blockID, "")
+func (api *NotionAPI) retrieveBlockChildren(client *notion.Client, blockID string) (blocks []notion.Block, err error) {
+	blocks, err = api.retrieveBlockChildrenLoop(client, blockID, "")
 	if err != nil {
 		return
 	}
@@ -114,22 +118,21 @@ func retrieveBlockChildren(client *notion.Client, blockID string) (blocks []noti
 		if !block.HasChildren() {
 			continue
 		}
-
 		switch blockType {
 		case reflect.TypeOf(&notion.ParagraphBlock{}):
-			block.(*notion.ParagraphBlock).Children, err = retrieveBlockChildren(client, block.ID())
+			block.(*notion.ParagraphBlock).Children, err = api.retrieveBlockChildren(client, block.ID())
 		case reflect.TypeOf(&notion.CalloutBlock{}):
-			block.(*notion.CalloutBlock).Children, err = retrieveBlockChildren(client, block.ID())
+			block.(*notion.CalloutBlock).Children, err = api.retrieveBlockChildren(client, block.ID())
 		case reflect.TypeOf(&notion.QuoteBlock{}):
-			block.(*notion.QuoteBlock).Children, err = retrieveBlockChildren(client, block.ID())
+			block.(*notion.QuoteBlock).Children, err = api.retrieveBlockChildren(client, block.ID())
 		case reflect.TypeOf(&notion.BulletedListItemBlock{}):
-			block.(*notion.BulletedListItemBlock).Children, err = retrieveBlockChildren(client, block.ID())
+			block.(*notion.BulletedListItemBlock).Children, err = api.retrieveBlockChildren(client, block.ID())
 		case reflect.TypeOf(&notion.NumberedListItemBlock{}):
-			block.(*notion.NumberedListItemBlock).Children, err = retrieveBlockChildren(client, block.ID())
+			block.(*notion.NumberedListItemBlock).Children, err = api.retrieveBlockChildren(client, block.ID())
 		case reflect.TypeOf(&notion.ToDoBlock{}):
-			block.(*notion.ToDoBlock).Children, err = retrieveBlockChildren(client, block.ID())
+			block.(*notion.ToDoBlock).Children, err = api.retrieveBlockChildren(client, block.ID())
 		case reflect.TypeOf(&notion.TableBlock{}):
-			block.(*notion.TableBlock).Children, err = retrieveBlockChildren(client, block.ID())
+			block.(*notion.TableBlock).Children, err = api.retrieveBlockChildren(client, block.ID())
 		}
 
 		if err != nil {
@@ -142,7 +145,7 @@ func retrieveBlockChildren(client *notion.Client, blockID string) (blocks []noti
 
 // changeStatus changes the Notion article status to the published value if set.
 // It returns true if status changed.
-func changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
+func (api *NotionAPI) changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
 	// No published value or filter prop to change
 	if config.FilterProp == "" || config.PublishedValue == "" {
 		return false
@@ -164,7 +167,7 @@ func changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
 	}
 
 	// update current update time
-	currentTime := mustParseDateTime(time.Now().Format("2006-01-02T15:04:05.999Z0"))
+	currentTime := api.mustParseDateTime(time.Now().Format("2006-01-02T15:04:05.999Z0"))
 	updatedProps["PublishDate"] = notion.DatabasePageProperty{
 		Date: &notion.Date{
 			Start: currentTime,
@@ -183,7 +186,7 @@ func changeStatus(client *notion.Client, p notion.Page, config Notion) bool {
 	return err == nil
 }
 
-func mustParseDateTime(value string) notion.DateTime {
+func (api *NotionAPI) mustParseDateTime(value string) notion.DateTime {
 	dt, err := notion.ParseDateTime(value)
 	if err != nil {
 		panic(err)

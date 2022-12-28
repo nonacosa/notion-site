@@ -25,8 +25,12 @@ var rootCmd = &cobra.Command{
 		if err := viper.Unmarshal(&config); err != nil {
 			log.Fatal(err)
 		}
+		api := generator.NewAPI()
+		files := generator.NewFiles(config)
+		tm := generator.New()
+		ns := generator.NewNotionSite(api, tm, files, config)
 
-		if err := generator.Run(config); err != nil {
+		if err := generator.Run(ns); err != nil {
 			log.Println(err)
 		}
 	},
