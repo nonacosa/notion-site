@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/pkwenda/notion-site/pkg"
 	"log"
 	"os"
-
-	"github.com/pkwenda/notion-site/generator"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -21,12 +20,17 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		var config generator.Config
+		var config pkg.Config
 		if err := viper.Unmarshal(&config); err != nil {
 			log.Fatal(err)
 		}
+		api := pkg.NewAPI()
+		files := pkg.NewFiles(config)
+		tm := pkg.New()
+		caches := pkg.NewNotionCaches()
+		ns := pkg.NewNotionSite(api, tm, files, config, caches)
 
-		if err := generator.Run(config); err != nil {
+		if err := pkg.Run(ns); err != nil {
 			log.Println(err)
 		}
 	},

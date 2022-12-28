@@ -1,4 +1,4 @@
-package generator
+package pkg
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ type Notion struct {
 
 type Markdown struct {
 	ShortcodeSyntax string `yaml:"shortcodeSyntax"` // hugo,hexo,vuepress
-	PostSavePath    string `yaml:"postSavePath"`
+	HomePath        string `yaml:"homePath"`
 	ImagePublicLink string `yaml:"imagePublicLink"`
 
 	// Optional:
@@ -40,7 +40,7 @@ func DefaultConfigInit() error {
 		},
 		Markdown: Markdown{
 			ShortcodeSyntax: "hugo",
-			PostSavePath:    "posts/notion",
+			HomePath:        "",
 		},
 	}
 	out, err := yaml.Marshal(defaultCfg)

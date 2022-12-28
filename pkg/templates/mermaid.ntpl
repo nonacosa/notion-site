@@ -1,0 +1,6 @@
+
+{{ `{{< mermaid >}}` }}
+{{rich2md .Block.RichText }}
+{{ `{{< /mermaid >}}` }}
+
+
