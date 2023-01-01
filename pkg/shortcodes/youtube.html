@@ -4,7 +4,7 @@
 {{- $id := .Get "id" | default (.Get 0) -}}
 <div class="video-wrapper">
     <iframe loading="lazy" 
-            style="position: absolute; top: 0; left: 100; right:100; width: 80%; height: 80%; border:0;"
+            style="position: absolute; top: 0; left: 5%; right:5%; width: 90%; height: 80%; border:0;"
             src="https://{{ $ytHost }}/embed/{{ $id }}{{ with .Get "autoplay" }}{{ if eq . "true" }}?autoplay=1{{ end }}{{ end }}" 
             allowfullscreen 
             title="YouTube Video"

@@ -2,13 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/pkwenda/notion-site/pkg"
-	"log"
-	"os"
-
 	"github.com/joho/godotenv"
+	"github.com/pkwenda/notion-site/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"log"
+	"os"
 )
 
 var cfgFile string
@@ -26,6 +25,7 @@ var rootCmd = &cobra.Command{
 		}
 		api := pkg.NewAPI()
 		files := pkg.NewFiles(config)
+		files.CopyShortCodes(config.HomePath)
 		tm := pkg.New()
 		caches := pkg.NewNotionCaches()
 		ns := pkg.NewNotionSite(api, tm, files, config, caches)

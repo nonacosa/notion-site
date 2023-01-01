@@ -23,8 +23,10 @@ func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *
 			break
 		}
 	}
+	(*extra)["Url"] = og.URL
 	(*extra)["Title"] = og.Title
 	(*extra)["Description"] = og.Description
+	(*extra)["Icon"] = og.Favicon
 	return nil
 }
 

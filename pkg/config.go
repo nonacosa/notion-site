@@ -16,7 +16,6 @@ type Notion struct {
 }
 
 type Markdown struct {
-	ShortcodeSyntax string `yaml:"shortcodeSyntax"` // hugo,hexo,vuepress
 	HomePath        string `yaml:"homePath"`
 	ImagePublicLink string `yaml:"imagePublicLink"`
 
@@ -39,8 +38,7 @@ func DefaultConfigInit() error {
 			PublishedValue: "Published",
 		},
 		Markdown: Markdown{
-			ShortcodeSyntax: "hugo",
-			HomePath:        "",
+			HomePath: "",
 		},
 	}
 	out, err := yaml.Marshal(defaultCfg)

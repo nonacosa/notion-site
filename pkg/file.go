@@ -223,3 +223,57 @@ func (files *Files) saveTo(reader io.Reader, rawURL, distDir string) (string, er
 	_, err = io.Copy(out, reader)
 	return filename, err
 }
+
+func (files *Files) CopyShortCodes(home string) {
+	src := filepath.Join("pkg", "shortcodes")
+	dst := filepath.Join(home, "layouts", "shortcodes")
+	err := os.RemoveAll(dst)
+	if err != nil {
+		fmt.Errorf("couldn't del folder: %s", err)
+	}
+	files.copyDir(src, dst)
+	src = filepath.Join("pkg", "shortcodes", "static")
+	dst = filepath.Join(home, "static", "notion-site")
+	err = os.RemoveAll(dst)
+	if err != nil {
+		fmt.Errorf("couldn't del folder: %s", err)
+	}
+	files.copyDir(src, dst)
+}
+
+func (files *Files) copyDir(src, dst string) error {
+	_, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	err = files.mkdirPath(dst)
+	if err != nil {
+		return err
+	}
+	err = filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		dstPath := filepath.Join(dst, path[len(src):])
+		return files.copyFile(path, dstPath)
+	})
+	return err
+}
+
+func (files *Files) copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}

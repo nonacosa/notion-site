@@ -1,0 +1,22 @@
+
+<link rel="preload" href="/notion-site/bookmark/bookmark.css" as="style">
+<link rel="stylesheet" href="/notion-site/bookmark/bookmark.css" data-n-g="">
+<a href="{{ .Get "url" }}" target="_blank" rel="noreferrer" class="">
+    <article class="flex justify-between h-40 rounded border border-gray-400 border-solid">
+        <div class="flex flex-col justify-between p-5  hover:bg-gray-100 w-3/5">
+            <h3 class="text-2xl truncate">{{ .Get "title" }} </h3>
+            <p class="overflow-hidden h-12 text-base text-gray-500">
+                {{ .Get "des" }}
+            </p>
+            <div class="flex items-center">
+                <img src="{{ .Get "icon" }}" class="h-6" alt="">
+                <p class="text-base truncate ml-2">
+                    {{ .Get "url" }}
+                </p>
+            </div>
+        </div>
+        <div class="w-2/5 h-full rounded">
+            <img src="{{ .Get "image" }}" class="object-cover w-full h-full" alt="">
+        </div>
+    </article>
+</a>

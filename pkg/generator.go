@@ -46,7 +46,7 @@ func Run(ns *NotionSite) error {
 
 func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) error {
 	// Generate markdown content to the file
-	initNotionSite(ns, page)
+	initNotionSite(ns, page, blocks)
 
 	if ns.api.CheckHasChildDataBase(blocks, func(b bool, id string) {
 		// cache child database block id
@@ -78,16 +78,16 @@ func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) error {
 	}
 
 	// todo edit frontMatter
-	if ns.config.Markdown.ShortcodeSyntax != "" {
-		ns.tm.EnableExtendedSyntax(ns.config.Markdown.ShortcodeSyntax)
-	}
+	//if ns.config.Markdown.ShortcodeSyntax != "" {
+	//	ns.tm.EnableExtendedSyntax(ns.config.Markdown.ShortcodeSyntax)
+	//}
 
 	//// todo how to support mention feature ???
-	//ns.currentBlocks, _ = syncMentionBlocks(ns.api.Client, blocks)
+
 	return ns.tm.GenerateTo(ns)
 }
 
-func initNotionSite(ns *NotionSite, page notion.Page) {
+func initNotionSite(ns *NotionSite, page notion.Page, blocks []notion.Block) {
 	// set current origin page
 	ns.currentPage = page
 	// set current notion page prop
@@ -96,7 +96,7 @@ func initNotionSite(ns *NotionSite, page notion.Page) {
 	// set notion site files info
 	ns.tm.NotionProps = ns.currentPageProp
 	ns.tm.Files = ns.files
-
+	ns.currentBlocks = blocks
 }
 
 func processDatabase(ns *NotionSite, id string) error {

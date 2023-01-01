@@ -20,7 +20,7 @@ import (
 var mdTemplatesFS embed.FS
 
 var (
-	extendedSyntaxBlocks            = []any{reflect.TypeOf(&notion.BookmarkBlock{}), reflect.TypeOf(&notion.CalloutBlock{})}
+	extendedSyntaxBlocks            = []any{reflect.TypeOf(&notion.CalloutBlock{})}
 	blockTypeInExtendedSyntaxBlocks = func(bType any) bool {
 		for _, blockType := range extendedSyntaxBlocks {
 			if blockType == bType {
