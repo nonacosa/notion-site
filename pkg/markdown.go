@@ -247,7 +247,7 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 		}
 
 		// todo configurable
-		if tm.ContentBuffer.Len() > 60 && !hasMoreTag {
+		if tm.ContentBuffer.Len() > 60 && !hasMoreTag && !tm.NotionProps.IsSettingFile {
 			addMoreTag = tm.ContentBuffer.Len() > 60
 			hasMoreTag = true
 		}
@@ -373,30 +373,18 @@ func ConvertTable(rows []notion.Block) string {
 	if len(rows) == 0 {
 		return ""
 	}
-	var head = ""
-	l := len((rows[0]).(*notion.TableRowBlock).Cells)
-	for i := 0; i < l; i++ {
-		head += "| "
-		if i == l-1 {
-			head += "|\n"
-		}
-	}
-	for i := 0; i < l; i++ {
-		head += "| - "
-		if i == l-1 {
-			head += "|\n"
-		}
-	}
-	buf.WriteString(head)
-	for _, row := range rows {
+	for i, row := range rows {
 		rowBlock := row.(*notion.TableRowBlock)
-		buf.WriteString(ConvertRow(rowBlock))
+		if i == 1 {
+			buf.WriteString(ConvertRow(rowBlock, "---"))
+		}
+		buf.WriteString(ConvertRow(rowBlock, ""))
 	}
 
 	return buf.String()
 }
 
-func ConvertRow(r *notion.TableRowBlock) string {
+func ConvertRow(r *notion.TableRowBlock, fmt string) string {
 	var rowMd = ""
 	for i, cell := range r.Cells {
 		if i == 0 {
@@ -404,7 +392,9 @@ func ConvertRow(r *notion.TableRowBlock) string {
 		}
 		for _, rich := range cell {
 			a := ConvertRich(rich)
-			print(a)
+			if fmt != "" {
+				a = fmt
+			}
 			rowMd += " " + a + " |"
 
 		}

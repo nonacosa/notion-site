@@ -224,23 +224,6 @@ func (files *Files) saveTo(reader io.Reader, rawURL, distDir string) (string, er
 	return filename, err
 }
 
-func (files *Files) CopyShortCodes(home string) {
-	src := filepath.Join("pkg", "shortcodes")
-	dst := filepath.Join(home, "layouts", "shortcodes")
-	err := os.RemoveAll(dst)
-	if err != nil {
-		fmt.Errorf("couldn't del folder: %s", err)
-	}
-	files.copyDir(src, dst)
-	src = filepath.Join("pkg", "shortcodes", "static")
-	dst = filepath.Join(home, "static", "notion-site")
-	err = os.RemoveAll(dst)
-	if err != nil {
-		fmt.Errorf("couldn't del folder: %s", err)
-	}
-	files.copyDir(src, dst)
-}
-
 func (files *Files) copyDir(src, dst string) error {
 	_, err := os.Stat(src)
 	if err != nil {

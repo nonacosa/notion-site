@@ -25,7 +25,6 @@ var rootCmd = &cobra.Command{
 		}
 		api := pkg.NewAPI()
 		files := pkg.NewFiles(config)
-		files.CopyShortCodes(config.HomePath)
 		tm := pkg.New()
 		caches := pkg.NewNotionCaches()
 		ns := pkg.NewNotionSite(api, tm, files, config, caches)
