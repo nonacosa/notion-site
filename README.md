@@ -4,8 +4,8 @@ Read Notion-Site Doc: https://ns-doc.env.wtf，And the documentation is built on
 
 ![](img/notion-site.png)
 
-[![](https://img.shields.io/github/v/release/pkwenda/notion-site.svg)](https://github.com/bonaysoft/notion-md-gen/releases)
-[![](https://img.shields.io/github/license/pkwenda/notion-site.svg)](https://github.com/bonaysoft/notion-md-gen/blob/master/LICENSE)
+[![](https://img.shields.io/github/v/release/pkwenda/notion-site.svg)](https://github.com/pkwenda/notion-site/releases)
+[![](https://img.shields.io/github/license/pkwenda/notion-site.svg)](https://github.com/pkwenda/notion-site/blob/master/LICENSE)
 
 **notion-site** is an open source software for a custom website based on [Notion](https://www.notion.so/) and [Hugo](https://gohugo.io/), and you can find your favorite template as your blog or documentation site among the hundreds of templates in the [Hugo Template Store](https://themes.gohugo.io/).
 
@@ -35,7 +35,7 @@ notion-site
 
 ### Github Action
 
-> The installation command tool is helpful for local debugging. If you do not want to debug locally, you can also copy the configuration file to your project and run it directly through GitHubAction. You can see the example config in [example/notion-md-gen.yaml](example/notion-md-gen.yaml).
+> The installation command tool is helpful for local debugging. If you do not want to debug locally, you can also copy the configuration file to your project and run it directly through GitHubAction. You can see the example config in [notion-site-doc](https://github.com/pkwenda/notion-site-doc/tree/main/.github/workflows).
 
 To use it as a Github Action, you can use the template  of the repository
 in [.github/worflows/notion.yml](.github/workflows/notion.yml).
