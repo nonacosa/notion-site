@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/alexeyco/simpletable v1.0.0
 	github.com/briandowns/spinner v1.18.0
 	github.com/dlclark/regexp2 v1.7.0
 	github.com/druidcaesa/gotool v0.0.0-20220613023420-645c641d1304
