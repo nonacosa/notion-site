@@ -34,8 +34,6 @@ func Run(ns *NotionSite) error {
 		if err := processDatabase(ns, cache.ChildDatabaseId); err != nil {
 			fmt.Errorf("process child database erro but continu %s", err)
 		}
-		// del
-		ns.caches = append(ns.caches[:0], ns.caches[1:]...)
 	}
 	// Set GITHUB_ACTIONS info variables : https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions
 	if os.Getenv("GITHUB_ACTIONS") == "true" {

@@ -390,14 +390,16 @@ func ConvertRow(r *notion.TableRowBlock, fmt string) string {
 		if i == 0 {
 			rowMd += "|"
 		}
+		var a = ""
 		for _, rich := range cell {
-			a := ConvertRich(rich)
-			if fmt != "" {
-				a = fmt
-			}
-			rowMd += " " + a + " |"
+			a += ConvertRich(rich)
 
 		}
+		if fmt != "" {
+			a = fmt
+		}
+		rowMd += " " + a + " |"
+
 		if i == len(r.Cells)-1 {
 			rowMd += "\n"
 		}
