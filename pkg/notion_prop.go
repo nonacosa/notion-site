@@ -68,7 +68,7 @@ type NotionProp struct {
 	Name             string
 	Title            string
 	Status           string
-	Categories       string
+	Categories       []string
 	Tags             []string
 	Position         string
 	FileName         string
@@ -90,7 +90,7 @@ func NewNotionProp(page notion.Page) (np *NotionProp) {
 		Name:        getTitle(page, nameProp),
 		Title:       getRichText(page, titleProp),
 		Status:      getSelect(page, statusProp),
-		Categories:  getSelect(page, categoriesProp),
+		Categories:  getMultiSelect(page, categoriesProp),
 		Tags:        getMultiSelect(page, TagsProp),
 		Position:    getSelect(page, PositionProp),
 		FileName:    getRichText(page, fileNameProp),

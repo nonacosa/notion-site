@@ -215,10 +215,6 @@ func (tm *ToMarkdown) inject(mdb *MdBlock, blocks []notion.Block, index int) err
 	block := mdb.Block
 	switch reflect.TypeOf(block) {
 	case reflect.TypeOf(&notion.ImageBlock{}):
-		act := tm.GalleryAction(blocks, index)
-		if act == "skip" || act == "write" {
-			tm.Files.NeedSaveGallery = true
-		}
 		err = tm.Files.DownloadMedia(block.(*notion.ImageBlock))
 	//todo hugo
 	case reflect.TypeOf(&notion.BookmarkBlock{}):

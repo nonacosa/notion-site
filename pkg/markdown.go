@@ -63,7 +63,6 @@ type ToMarkdown struct {
 	FrontMatter       map[string]interface{}
 	ContentBuffer     *bytes.Buffer
 	ImgSavePath       string
-	GallerySavePath   string
 	ImgVisitPath      string
 	ArticleFolderPath string
 	ContentTemplate   string
@@ -251,16 +250,6 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 			addMoreTag = tm.ContentBuffer.Len() > 60
 			hasMoreTag = true
 		}
-		act := tm.GalleryAction(blocks, index)
-		if act == "skip" {
-			continue
-		}
-
-		if act == "write" {
-			tm.Files.NeedSaveGallery = true
-			tm.Files.CurrentNTPL = "gallery"
-			currentBlockType = "gallery"
-		}
 
 		if tm.checkMermaid(block) {
 			currentBlockType = "mermaid"
@@ -278,38 +267,6 @@ func (tm *ToMarkdown) checkMermaid(block any) bool {
 		}
 	}
 	return false
-}
-
-func (tm *ToMarkdown) GalleryAction(blocks []notion.Block, i int) string {
-	imageType := reflect.TypeOf(&notion.ImageBlock{})
-	if tm.FrontMatter["Type"] != "gallery" {
-		return "nothing"
-	}
-	if reflect.TypeOf(blocks[i]) != imageType {
-		return "noting"
-	}
-	if len(blocks) == 1 {
-		return "nothing"
-	}
-	if i == 0 && imageType == reflect.TypeOf(blocks[i+1]) {
-		return "skip"
-	}
-	if i == len(blocks)-1 && imageType == reflect.TypeOf(blocks[i-1]) {
-		return "write"
-	}
-
-	if imageType != reflect.TypeOf(blocks[i-1]) && imageType == reflect.TypeOf(blocks[i]) && imageType == reflect.TypeOf(blocks[i+1]) {
-		return "skip"
-	}
-
-	if imageType == reflect.TypeOf(blocks[i-1]) && imageType == reflect.TypeOf(blocks[i+1]) {
-		return "skip"
-	}
-	if imageType == reflect.TypeOf(blocks[i-1]) && imageType != reflect.TypeOf(blocks[i+1]) {
-		return "write"
-	}
-
-	return "nothing"
 }
 
 // GenBlock notion to hugo shortcodes template

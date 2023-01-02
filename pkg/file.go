@@ -15,7 +15,6 @@ import (
 // all user wr | group wr | other user wr
 const defaultPermission = 0755
 const mediaRelativePath = "media"
-const galleryRelativePath = "gallery"
 const defaultMarkdownName = "index.md"
 
 type Files struct {
@@ -26,13 +25,11 @@ type Files struct {
 	FileFolderPath           string
 	FilePath                 string
 	HomePath                 string
-	GalleryPath              string
 	DefaultMarkdownName      string
 	DefaultMediaFolderName   string
 	DefaultgalleryFolderName string
 	currentWriter            io.Writer
 	CurrentNTPL              string
-	NeedSaveGallery          bool
 }
 
 func NewFiles(config Config) (files *Files) {
@@ -40,13 +37,10 @@ func NewFiles(config Config) (files *Files) {
 		Permission: defaultPermission,
 		HomePath:   config.HomePath,
 		//Position:               position,
-		DefaultMarkdownName:      defaultMarkdownName,
-		DefaultMediaFolderName:   mediaRelativePath,
-		DefaultgalleryFolderName: galleryRelativePath,
-		NeedSaveGallery:          false,
+		DefaultMarkdownName:    defaultMarkdownName,
+		DefaultMediaFolderName: mediaRelativePath,
 	}
 	files.MediaPath = filepath.Join(config.HomePath, files.Position, mediaRelativePath)
-	files.GalleryPath = filepath.Join(files.MediaPath, galleryRelativePath)
 	return
 }
 
@@ -109,13 +103,11 @@ func (ns *NotionSite) SetFileInfo(position string) {
 	} else if ns.currentPageProp.IsCustomNameFile {
 		ns.files.FileName = ns.getFilename()
 		ns.files.MediaPath = filepath.Join(ns.config.HomePath, ns.files.Position, mediaRelativePath)
-		ns.files.GalleryPath = filepath.Join(ns.files.MediaPath, galleryRelativePath)
 		ns.files.FileFolderPath = filepath.Join(ns.config.HomePath, ns.files.Position)
 		ns.files.FilePath = filepath.Join(ns.config.HomePath, ns.files.Position, ns.files.FileName)
 	} else {
 		ns.files.FileName = filepath.Join(ns.getArticleFolderPath(), defaultMarkdownName)
 		ns.files.MediaPath = filepath.Join(ns.config.HomePath, ns.files.Position, ns.getArticleFolderPath(), mediaRelativePath)
-		ns.files.GalleryPath = filepath.Join(ns.files.MediaPath, galleryRelativePath)
 		ns.files.FileFolderPath = filepath.Join(ns.config.HomePath, ns.files.Position, ns.getArticleFolderPath())
 		ns.files.FilePath = filepath.Join(ns.files.FileFolderPath, defaultMarkdownName)
 	}
@@ -126,9 +118,6 @@ func (files *Files) DownloadMedia(dynamicMedia any) error {
 	download := func(imgURL string) (string, error) {
 		var savePath string
 		savePath = files.MediaPath
-		if files.NeedSaveGallery {
-			savePath = files.GalleryPath
-		}
 		resp, err := http.Get(imgURL)
 		if err != nil {
 			return "", err
