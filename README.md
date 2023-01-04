@@ -1,6 +1,8 @@
 # notion-site
 
-Read Notion-Site Doc: https://ns-doc.env.wtf  And the documentation is built on [this Notion page](https://zhuangwenda.notion.site/2bd00e5dfff3449ba81e0142f8af9bbb?v=065c41ad42be4683966e10f476e60afd) 
+Read  Doc Example: https://ns-doc.env.wtf  And the documentation is built on [this Notion page](https://zhuangwenda.notion.site/2bd00e5dfff3449ba81e0142f8af9bbb?v=065c41ad42be4683966e10f476e60afd) 
+
+Read Blog Example: https://blog.env.wtf  And the Blog is built on [this Notion page](https://zhuangwenda.notion.site/f72e3dd931c541269f75f5e34d7638b9?v=52579f2229084082a7d5cdc4a6ef7418) 
 
 ![](img/notion-site.png)
 
