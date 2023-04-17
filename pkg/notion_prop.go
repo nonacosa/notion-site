@@ -219,21 +219,19 @@ func (np *NotionProp) getChildrenBlocks(block *MdBlock) {
 	case reflect.TypeOf(&notion.QuoteBlock{}):
 		block.children = block.Block.(*notion.QuoteBlock).Children
 	case reflect.TypeOf(&notion.ToggleBlock{}):
-		block.children = block.Block.(*notion.ParagraphBlock).Children
+		block.children = block.Block.(*notion.ToggleBlock).Children
 	case reflect.TypeOf(&notion.ParagraphBlock{}):
-		block.children = block.Block.(*notion.CalloutBlock).Children
+		block.children = block.Block.(*notion.ParagraphBlock).Children
 	case reflect.TypeOf(&notion.CalloutBlock{}):
-		block.children = block.Block.(*notion.BulletedListItemBlock).Children
+		block.children = block.Block.(*notion.CalloutBlock).Children
 	case reflect.TypeOf(&notion.BulletedListItemBlock{}):
-		block.children = block.Block.(*notion.QuoteBlock).Children
+		block.children = block.Block.(*notion.BulletedListItemBlock).Children
 	case reflect.TypeOf(&notion.NumberedListItemBlock{}):
 		block.children = block.Block.(*notion.NumberedListItemBlock).Children
 	case reflect.TypeOf(&notion.ToDoBlock{}):
 		block.children = block.Block.(*notion.ToDoBlock).Children
 	case reflect.TypeOf(&notion.CodeBlock{}):
 		block.children = block.Block.(*notion.CodeBlock).Children
-	case reflect.TypeOf(&notion.CodeBlock{}):
-		block.children = block.Block.(*notion.ColumnBlock).Children
 	//case reflect.TypeOf(&notion.ColumnListBlock{}):
 	//	return block.Block.(*notion.ColumnListBlock).Children
 	case reflect.TypeOf(&notion.TableBlock{}):
