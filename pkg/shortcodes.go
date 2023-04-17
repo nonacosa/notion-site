@@ -246,6 +246,7 @@ func (tm *ToMarkdown) inject(mdb *MdBlock, blocks []notion.Block, index int) err
 	case reflect.TypeOf(&notion.TemplateBlock{}):
 		err = tm.todo(block.(*notion.TemplateBlock), &mdb.Extra)
 	case reflect.TypeOf(&notion.AudioBlock{}):
+		err = tm.Files.DownloadMedia(block.(*notion.AudioBlock))
 		err = tm.injectFileInfo(block.(*notion.AudioBlock), &mdb.Extra)
 	case reflect.TypeOf(&notion.ToDoBlock{}):
 		mdb.Block = block.(*notion.ToDoBlock)
