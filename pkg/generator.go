@@ -40,7 +40,11 @@ func Run(ns *NotionSite) error {
 	}
 	// Set GITHUB_ACTIONS info variables : https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
-		fmt.Printf("::set-output name=articles_published::\n")
+		str := os.Getenv("GITHUB_OUTPUT")
+		err := os.Setenv("GITHUB_OUTPUT", str+"name=articles_published::")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
