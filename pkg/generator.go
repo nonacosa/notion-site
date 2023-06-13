@@ -28,7 +28,10 @@ func Run(ns *NotionSite) error {
 		return fmt.Errorf("couldn't create content folder: %s", err)
 	}
 	// find and process database page
-	processDatabase(ns, ns.config.DatabaseID)
+	err := processDatabase(ns, ns.config.DatabaseID)
+	if err != nil {
+		return err
+	}
 	for _, cache := range ns.caches {
 		//ns.files.MediaPath = cache.ParentFilesInfo.MediaPath
 		if err := processDatabase(ns, cache.ChildDatabaseId); err != nil {

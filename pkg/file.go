@@ -51,7 +51,7 @@ func (files *Files) mkdirHomePath() error {
 func (files *Files) mkdirPositionPath(position string) error {
 	err := os.MkdirAll(filepath.Join(files.HomePath, position), os.FileMode(files.Permission))
 	if err != nil {
-		fmt.Errorf("couldn't create content folder: %s", err)
+		err = fmt.Errorf("couldn't create content folder: %s", err)
 	}
 	return err
 }
@@ -59,7 +59,7 @@ func (files *Files) mkdirPositionPath(position string) error {
 func (files *Files) mkdirPath(path string) error {
 	err := os.MkdirAll(path, os.FileMode(files.Permission))
 	if err != nil {
-		fmt.Errorf("couldn't create content folder: %s", err)
+		err = fmt.Errorf("couldn't create content folder: %s", err)
 	}
 	return err
 }

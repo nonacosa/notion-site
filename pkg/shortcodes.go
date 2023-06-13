@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/druidcaesa/gotool"
 	"github.com/dstotijn/go-notion"
 	"github.com/otiai10/opengraph"
 	"reflect"
@@ -104,7 +103,7 @@ func (tm *ToMarkdown) injectFileInfo(file any, extra *map[string]interface{}) er
 		}
 	}
 	(*extra)["Url"] = url
-	name, _ := gotool.StrUtils.RemoveSuffix(url)
+	name, _ := RemoveSuffix(url)
 	(*extra)["FileName"] = name
 	return nil
 }
