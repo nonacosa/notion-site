@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // all user wr | group wr | other user wr
@@ -73,7 +74,7 @@ func (ns *NotionSite) getArticleFolderPath() string {
 		" ", "-",
 	)
 	if ns.config.GroupByMonth {
-		return filepath.Join(ns.currentPageProp.CreateAt.Format("2006-01-02"), escapedTitle)
+		return filepath.Join(ns.currentPageProp.CreateAt.Format(time.DateOnly), escapedTitle)
 	}
 
 	return escapedTitle

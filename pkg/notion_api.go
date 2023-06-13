@@ -169,7 +169,7 @@ func (api *NotionAPI) changeStatus(client *notion.Client, p notion.Page, config 
 	}
 
 	// update current update time
-	currentTime := api.mustParseDateTime(time.Now().Format("2006-01-02T15:04:05.999Z0"))
+	currentTime := api.mustParseDateTime(time.Now().Format(notion.DateTimeFormat))
 	updatedProps["PublishDate"] = notion.DatabasePageProperty{
 		Date: &notion.Date{
 			Start: currentTime,

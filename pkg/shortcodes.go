@@ -140,11 +140,11 @@ func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePage
 		}
 	case *time.Time:
 		if prop != nil {
-			fmv = prop.Format("2006-01-02T15:04:05+07:00")
+			fmv = prop.Format(time.RFC3339)
 		}
 	case *notion.Date:
 		if prop != nil {
-			fmv = prop.Start.Format("2006-01-02T15:04:05+07:00")
+			fmv = prop.Start.Format(time.RFC3339)
 		}
 	case *notion.User:
 		fmv = prop.Name
