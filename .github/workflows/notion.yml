@@ -12,8 +12,11 @@ jobs:
           submodules: true  # Fetch Hugo themes (true OR recursive)
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
       - name: Clean the old post
+        # Add a random number file to avoid git commit error
         run: |
-          rm -rf ./content/post/*
+          rm -rf ./content/*
+          mkdir ./content
+          touch ./content/temp-"$RANDOM".md
       - name: notion-site
         uses: pkwenda/notion-site@master
         env:
