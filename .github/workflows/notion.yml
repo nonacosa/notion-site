@@ -15,7 +15,7 @@ jobs:
         # Add a random number file to avoid git commit error
         run: |
           rm -rf ./content/*
-          mkdir ./content
+          mkdir -p ./content
           touch ./content/temp-"$RANDOM".md
       - name: notion-site
         uses: pkwenda/notion-site@master
