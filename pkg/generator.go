@@ -28,7 +28,10 @@ func Run(ns *NotionSite) error {
 		return fmt.Errorf("couldn't create content folder: %s", err)
 	}
 	// find and process database page
-	processDatabase(ns, ns.config.DatabaseID)
+	err := processDatabase(ns, ns.config.DatabaseID)
+	if err != nil {
+		return err
+	}
 	for _, cache := range ns.caches {
 		//ns.files.MediaPath = cache.ParentFilesInfo.MediaPath
 		if err := processDatabase(ns, cache.ChildDatabaseId); err != nil {
@@ -37,7 +40,11 @@ func Run(ns *NotionSite) error {
 	}
 	// Set GITHUB_ACTIONS info variables : https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
-		fmt.Printf("::set-output name=articles_published::\n")
+		str := os.Getenv("GITHUB_OUTPUT")
+		err := os.Setenv("GITHUB_OUTPUT", str+"name=articles_published::")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

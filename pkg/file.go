@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // all user wr | group wr | other user wr
@@ -51,7 +52,7 @@ func (files *Files) mkdirHomePath() error {
 func (files *Files) mkdirPositionPath(position string) error {
 	err := os.MkdirAll(filepath.Join(files.HomePath, position), os.FileMode(files.Permission))
 	if err != nil {
-		fmt.Errorf("couldn't create content folder: %s", err)
+		err = fmt.Errorf("couldn't create content folder: %s", err)
 	}
 	return err
 }
@@ -59,7 +60,7 @@ func (files *Files) mkdirPositionPath(position string) error {
 func (files *Files) mkdirPath(path string) error {
 	err := os.MkdirAll(path, os.FileMode(files.Permission))
 	if err != nil {
-		fmt.Errorf("couldn't create content folder: %s", err)
+		err = fmt.Errorf("couldn't create content folder: %s", err)
 	}
 	return err
 }
@@ -73,7 +74,7 @@ func (ns *NotionSite) getArticleFolderPath() string {
 		" ", "-",
 	)
 	if ns.config.GroupByMonth {
-		return filepath.Join(ns.currentPageProp.CreateAt.Format("2006-01-02"), escapedTitle)
+		return filepath.Join(ns.currentPageProp.CreateAt.Format(time.DateOnly), escapedTitle)
 	}
 
 	return escapedTitle

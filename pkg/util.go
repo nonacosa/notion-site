@@ -1,7 +1,9 @@
 package pkg
 
 import (
+	"errors"
 	"github.com/dlclark/regexp2"
+	"path"
 	"reflect"
 	"strings"
 	"unicode"
@@ -56,4 +58,21 @@ func CamelCaseToUnderscore(s string) string {
 func GetBlockType(block any) string {
 	blockType := strings.Replace(reflect.TypeOf(block).String(), "*notion.", "", -1)
 	return CamelCaseToUnderscore(strings.ReplaceAll(blockType, "Block", ""))
+}
+
+func HasEmpty(s string) bool {
+	if s == "" || len(s) == 0 {
+		return true
+	}
+	return false
+}
+
+func RemoveSuffix(str string) (string, error) {
+	if HasEmpty(str) {
+		return "", errors.New("Parameter  is an empty string")
+	}
+	filenameWithSuffix := path.Base(str)
+	fileSuffix := path.Ext(filenameWithSuffix)
+	filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix)
+	return filenameOnly, nil
 }

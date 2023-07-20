@@ -3,7 +3,7 @@ package pkg
 import (
 	"fmt"
 	"io/fs"
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -47,9 +47,9 @@ func DefaultConfigInit() error {
 	}
 
 	defer func() {
-		_ = ioutil.WriteFile(".env", []byte("NOTION_SECRET=xxxx"), 0644)
+		_ = os.WriteFile(".env", []byte("NOTION_SECRET=xxxx"), 0644)
 		fmt.Println("Config file notion-site.yaml and .env created, please edit them for yourself.")
 	}()
 
-	return ioutil.WriteFile("notion-site.yaml", out, fs.FileMode(0644))
+	return os.WriteFile("notion-site.yaml", out, fs.FileMode(0644))
 }
