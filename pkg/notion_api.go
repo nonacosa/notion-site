@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"github.com/briandowns/spinner"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/dstotijn/go-notion"
 	"log"
 	"os"
@@ -169,10 +170,9 @@ func (api *NotionAPI) changeStatus(client *notion.Client, p notion.Page, config 
 	}
 
 	// update current update time
-	currentTime := api.mustParseDateTime(time.Now().Format(notion.DateTimeFormat))
 	updatedProps["PublishDate"] = notion.DatabasePageProperty{
 		Date: &notion.Date{
-			Start: currentTime,
+			Start: notion.NewDateTime(time.Now(), true),
 		},
 	}
 
@@ -191,6 +191,7 @@ func (api *NotionAPI) changeStatus(client *notion.Client, p notion.Page, config 
 func (api *NotionAPI) mustParseDateTime(value string) notion.DateTime {
 	dt, err := notion.ParseDateTime(value)
 	if err != nil {
+		spew.Dump(value)
 		panic(err)
 	}
 	return dt

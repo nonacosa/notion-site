@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/briandowns/spinner v1.23.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dlclark/regexp2 v1.10.0
 	github.com/dstotijn/go-notion v0.11.0
 	github.com/joho/godotenv v1.5.1
