@@ -61,4 +61,5 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details on submitting patches and the co
  
 ## License
 
+
 notion-site is under the MIT license. See the [LICENSE](/LICENSE) file for details.
