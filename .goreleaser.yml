@@ -7,9 +7,9 @@ builds:
     main: ./main.go
     ldflags:
       - -s -w
-      - -X github.com/pkwenda/{{ .ProjectName }}/cmd.release={{.Version}}
-      - -X github.com/pkwenda/{{ .ProjectName }}/cmd.commit={{.Commit}}
-      - -X github.com/pkwenda/{{ .ProjectName }}/cmd.repo={{.GitURL}}
+      - -X github.com/lanlin/{{ .ProjectName }}/cmd.release={{.Version}}
+      - -X github.com/lanlin/{{ .ProjectName }}/cmd.commit={{.Commit}}
+      - -X github.com/lanlin/{{ .ProjectName }}/cmd.repo={{.GitURL}}
     goos:
       - linux
       - darwin
