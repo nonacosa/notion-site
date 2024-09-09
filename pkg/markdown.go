@@ -78,6 +78,7 @@ type FrontMatter struct {
 	Keywords     []interface{} `yaml:",flow"`
 	CreateAt     interface{}   `yaml:",flow"`
 	Author       interface{}   `yaml:",flow"`
+	Avatar       interface{}   `yaml:",flow"`
 	IsTranslated interface{}   `yaml:",flow"`
 	Lastmod      interface{}   `yaml:",flow"`
 	Description  interface{}   `yaml:",flow"`

@@ -28,7 +28,7 @@ type Files struct {
 	HomePath                 string
 	DefaultMarkdownName      string
 	DefaultMediaFolderName   string
-	DefaultgalleryFolderName string
+	DefaultGalleryFolderName string
 	currentWriter            io.Writer
 	CurrentNTPL              string
 }

@@ -5,8 +5,7 @@ tmp/
 build
 bin/
 web/
-.env
+.env.local
 .coverprofile
-notion-site.yaml
 config.yaml
 content/

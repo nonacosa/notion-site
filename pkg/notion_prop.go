@@ -17,6 +17,7 @@ const (
 	descriptionProp  = "Description"
 	createAtProp     = "CreateAt"
 	authorProp       = "Author"
+	avatarProp       = "Avatar"
 	lastModProp      = "Lastmod"
 	expiryDateProp   = "ExpiryDate"
 	publishDateProp  = "PublishDate"
@@ -75,6 +76,7 @@ type NotionProp struct {
 	Description      string
 	CreateAt         *time.Time
 	Author           string
+	Avatar           string
 	LastMod          time.Time
 	ExpiryDate       time.Time
 	PublishDate      time.Time
@@ -97,6 +99,7 @@ func NewNotionProp(page notion.Page) (np *NotionProp) {
 		Description: getRichText(page, descriptionProp),
 		CreateAt:    getPropValue(page, createAtProp).CreatedTime,
 		//Author: author,
+		//Avatar: avatar,
 		LastMod:      getDate(page, lastModProp),
 		ExpiryDate:   getDate(page, expiryDateProp),
 		PublishDate:  getDate(page, publishDateProp),
@@ -241,5 +244,4 @@ func (np *NotionProp) getChildrenBlocks(block *MdBlock) {
 	case reflect.TypeOf(&notion.TemplateBlock{}):
 		block.children = block.Block.(*notion.TemplateBlock).Children
 	}
-
 }
