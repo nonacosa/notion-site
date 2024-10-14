@@ -10,7 +10,7 @@ import (
 )
 
 // injectBookmarkInfo set bookmark info into the extra map field
-func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *map[string]any) error {
 	og, err := opengraph.Fetch(bookmark.URL)
 	if err != nil {
 		return err
@@ -29,7 +29,7 @@ func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *
 	return nil
 }
 
-func (tm *ToMarkdown) injectVideoInfo(video *notion.VideoBlock, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectVideoInfo(video *notion.VideoBlock, extra *map[string]any) error {
 	videoUrl := video.External.URL
 	var id, plat string
 	if strings.Contains(videoUrl, "youtube") {
@@ -41,7 +41,7 @@ func (tm *ToMarkdown) injectVideoInfo(video *notion.VideoBlock, extra *map[strin
 	return nil
 }
 
-func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[string]any) error {
 	var plat = ""
 	url := embed.URL
 	if len(url) == 0 {
@@ -73,7 +73,7 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 }
 
 // todo real file position
-func (tm *ToMarkdown) injectFileInfo(file any, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectFileInfo(file any, extra *map[string]any) error {
 	var url string
 	if reflect.TypeOf(file) == reflect.TypeOf(&notion.FileBlock{}) {
 		f := file.(*notion.FileBlock)
@@ -108,7 +108,7 @@ func (tm *ToMarkdown) injectFileInfo(file any, extra *map[string]interface{}) er
 	return nil
 }
 
-func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map[string]any) error {
 	var text = ""
 	for _, richText := range callout.RichText {
 		// todo if link ? or change highlight hugo
@@ -121,7 +121,7 @@ func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map
 
 // injectFrontMatter convert the prop to the front-matter
 func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePageProperty) {
-	var fmv interface{}
+	var fmv any
 
 	switch prop := property.Value().(type) {
 	case *notion.SelectOptions:
@@ -211,7 +211,7 @@ func (tm *ToMarkdown) injectFrontMatterCover(cover *notion.Cover) {
 	}
 }
 
-func (tm *ToMarkdown) todo(video any, extra *map[string]interface{}) error {
+func (tm *ToMarkdown) todo(video any, extra *map[string]any) error {
 	return nil
 }
 

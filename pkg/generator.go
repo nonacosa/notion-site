@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/dstotijn/go-notion"
 	"log"
@@ -27,16 +28,19 @@ func Run(ns *NotionSite) error {
 	if err := ns.files.mkdirHomePath(); err != nil {
 		return fmt.Errorf("couldn't create content folder: %s", err)
 	}
+	var fms []*FrontMatter
 	// find and process database page
-	err := processDatabase(ns, ns.config.DatabaseID)
+	fms, err := processDatabase(ns, ns.config.DatabaseID)
 	if err != nil {
 		return err
 	}
 	for _, cache := range ns.caches {
 		//ns.files.MediaPath = cache.ParentFilesInfo.MediaPath
-		if err := processDatabase(ns, cache.ChildDatabaseId); err != nil {
+		tmps, err := processDatabase(ns, cache.ChildDatabaseId)
+		if err != nil {
 			fmt.Errorf("process child database erro but continu %s", err)
 		}
+		fms = append(fms, tmps...)
 	}
 	// Set GITHUB_ACTIONS info variables : https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
@@ -46,10 +50,14 @@ func Run(ns *NotionSite) error {
 			return err
 		}
 	}
-	return nil
+	fmsBytes, err := json.Marshal(fms)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(ns.files.HomePath+"/content/blogs.json", fmsBytes, 0644)
 }
 
-func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) error {
+func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) (*FrontMatter, error) {
 	// Generate markdown content to the file
 	initNotionSite(ns, page, blocks)
 
@@ -63,7 +71,7 @@ func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) error {
 			})
 		}
 	}) {
-		return nil
+		return nil, nil
 	}
 
 	ns.files.mkdirPath(ns.files.FileFolderPath)
@@ -79,7 +87,7 @@ func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("error create file: %s", err)
+		return nil, fmt.Errorf("error create file: %s", err)
 	}
 
 	// todo edit frontMatter
@@ -89,7 +97,11 @@ func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) error {
 
 	//// todo how to support mention feature ???
 
-	return ns.tm.GenerateTo(ns)
+	fm, err := ns.tm.GenerateTo(ns)
+	if fm != nil {
+		fm.FolderPath = ns.files.FileFolderPath
+	}
+	return fm, err
 }
 
 func initNotionSite(ns *NotionSite, page notion.Page, blocks []notion.Block) {
@@ -104,10 +116,11 @@ func initNotionSite(ns *NotionSite, page notion.Page, blocks []notion.Block) {
 	ns.currentBlocks = blocks
 }
 
-func processDatabase(ns *NotionSite, id string) error {
+func processDatabase(ns *NotionSite, id string) ([]*FrontMatter, error) {
+	var fms []*FrontMatter
 	q, err := ns.api.queryDatabase(ns.api.Client, ns.config.Notion, id)
 	if err != nil {
-		return fmt.Errorf("❌ Querying Notion database: %s", err)
+		return fms, fmt.Errorf("❌ Querying Notion database: %s", err)
 	}
 	fmt.Println("✔ Querying Notion database: Completed")
 	// fetch page children
@@ -123,9 +136,13 @@ func processDatabase(ns *NotionSite, id string) error {
 		fmt.Println("✔ Getting blocks tree: Completed")
 
 		// Generate content to file
-		if err := generate(ns, page, blocks); err != nil {
+		fm, err := generate(ns, page, blocks)
+		if err != nil {
 			fmt.Println("❌ Generating blog post:", err)
 			continue
+		}
+		if fm != nil {
+			fms = append(fms, fm)
 		}
 		fmt.Println("✔ Generating blog post: Completed")
 		// Change status of blog post if desired
@@ -133,5 +150,5 @@ func processDatabase(ns *NotionSite, id string) error {
 			//changed++
 		}
 	}
-	return nil
+	return fms, nil
 }

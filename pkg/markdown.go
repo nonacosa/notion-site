@@ -46,7 +46,7 @@ type MdBlock struct {
 	notion.Block
 	children []notion.Block
 	Depth    int
-	Extra    map[string]interface{}
+	Extra    map[string]any
 }
 
 type MediaBlock struct {
@@ -60,44 +60,45 @@ type MediaBlock struct {
 type ToMarkdown struct {
 	NotionProps       *NotionProp
 	Files             *Files
-	FrontMatter       map[string]interface{}
+	FrontMatter       map[string]any
 	ContentBuffer     *bytes.Buffer
 	ImgSavePath       string
 	ImgVisitPath      string
 	ArticleFolderPath string
 	ContentTemplate   string
-	extra             map[string]interface{}
+	extra             map[string]any
 }
 
 type FrontMatter struct {
-	Title        interface{}   `yaml:",flow"`
-	Status       interface{}   `yaml:",flow"`
-	Position     interface{}   `yaml:",flow"`
-	Categories   []interface{} `yaml:",flow"`
-	Tags         []interface{} `yaml:",flow"`
-	Keywords     []interface{} `yaml:",flow"`
-	CreateAt     interface{}   `yaml:",flow"`
-	Author       interface{}   `yaml:",flow"`
-	Avatar       interface{}   `yaml:",flow"`
-	IsTranslated interface{}   `yaml:",flow"`
-	Lastmod      interface{}   `yaml:",flow"`
-	Description  interface{}   `yaml:",flow"`
-	Draft        interface{}   `yaml:",flow"`
-	ExpiryDate   interface{}   `yaml:",flow"`
-	//PublishDate   interface{}   `yaml:",flow"`
-	Show_comments interface{} `yaml:",flow"`
-	//Calculate Chinese word count accurately. Default is true
-	//IsCJKLanguage interface{} `yaml:",flow"`
-	Slug   interface{} `yaml:",flow"`
-	Image  interface{} `yaml:",flow"`
-	Weight interface{} `yaml:",flow"`
+	Title         any   `json:"title" yaml:",flow"`
+	Status        any   `json:"status" yaml:",flow"`
+	Position      any   `json:"position" yaml:",flow"`
+	Categories    []any `json:"categories" yaml:",flow"`
+	Tags          []any `json:"tags" yaml:",flow"`
+	Keywords      []any `json:"keywords" yaml:",flow"`
+	CreateAt      any   `json:"createAt" yaml:",flow"`
+	Author        any   `json:"author" yaml:",flow"`
+	Avatar        any   `json:"avatar" yaml:",flow"`
+	IsTranslated  any   `json:"isTranslated" yaml:",flow"`
+	Lastmod       any   `json:"lastMod" yaml:",flow"`
+	Description   any   `json:"description" yaml:",flow"`
+	Draft         any   `json:"draft" yaml:",flow"`
+	ExpiryDate    any   `json:"expiryDate" yaml:",flow"`
+	Show_comments any   `json:"showComments" yaml:",flow"`
+	Slug          any   `json:"slug" yaml:",flow"`
+	Image         any   `json:"image" yaml:",flow"`
+	Weight        any   `json:"weight" yaml:",flow"`
+	FolderPath    any   `json:"folderPath" yaml:",flow"`
+	// Calculate Chinese word count accurately. Default is true
+	//IsCJKLanguage any `json:"isCJKLanguage" yaml:",flow"`
+	//PublishDate   any `json:"publishDate"   yaml:",flow"`
 }
 
 func New() *ToMarkdown {
 	return &ToMarkdown{
-		FrontMatter:   make(map[string]interface{}),
+		FrontMatter:   make(map[string]any),
 		ContentBuffer: new(bytes.Buffer),
-		extra:         make(map[string]interface{}),
+		extra:         make(map[string]any),
 	}
 }
 
@@ -126,38 +127,41 @@ func (tm *ToMarkdown) shouldSkipRender(bType any) bool {
 	return !tm.ExtendedSyntaxEnabled() && blockTypeInExtendedSyntaxBlocks(bType)
 }
 
-func (tm *ToMarkdown) GenerateTo(ns *NotionSite) error {
+func (tm *ToMarkdown) GenerateTo(ns *NotionSite) (*FrontMatter, error) {
+	var fm *FrontMatter
 	if tm.NotionProps.IsSettingFile != true && tm.NotionProps.IsFolder() != true {
-		if err := tm.GenFrontMatter(ns.files.currentWriter); err != nil {
-			return err
+		tmp, err := tm.GenFrontMatter(ns.files.currentWriter)
+		if err != nil {
+			return nil, err
 		}
+		fm = tmp
 	}
 	if err := tm.GenContentBlocks(ns.currentBlocks, 0); err != nil {
-		return err
+		return fm, err
 	}
 
 	if tm.ContentTemplate != "" {
 		t, err := template.ParseFiles(tm.ContentTemplate)
 		if err != nil {
-			return err
+			return fm, err
 		}
-		return t.Execute(ns.files.currentWriter, tm)
+		return fm, t.Execute(ns.files.currentWriter, tm)
 	}
 	if tm.NotionProps.IsFolder() != true {
 		_, err := io.Copy(ns.files.currentWriter, tm.ContentBuffer)
-		return err
+		return fm, err
 	}
-	return nil
+	return fm, nil
 }
 
-func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
+func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) (*FrontMatter, error) {
 	fm := &FrontMatter{}
 	if len(tm.FrontMatter) == 0 {
-		return nil
+		return nil, nil
 	}
 	var imageKey string
 	var imagePath string
-	nfm := make(map[string]interface{})
+	nfm := make(map[string]any)
 	for key, value := range tm.FrontMatter {
 		nfm[strings.ToLower(key)] = value
 		// find image FrontMatter
@@ -183,7 +187,7 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
 	frontMatters, err := yaml.Marshal(fm)
 
 	if err != nil {
-		return nil
+		return fm, nil
 	}
 
 	buffer := new(bytes.Buffer)
@@ -195,7 +199,7 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) error {
 	}
 	buffer.WriteString("---\n")
 	_, err = io.Copy(writer, buffer)
-	return err
+	return fm, err
 }
 
 func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
@@ -275,7 +279,7 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 	if tm.NotionProps.IsSettingFile == true {
 		bType = "noop"
 	}
-	funcs := sprout.TxtFuncMap()
+	funcs := make(sprout.FunctionMap)
 	funcs["deref"] = func(i *bool) bool { return *i }
 	funcs["rich2md"] = ConvertRichText
 	funcs["table2md"] = ConvertTable
