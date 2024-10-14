@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dstotijn/go-notion"
+	"github.com/gohugoio/hugo/common/paths"
 	"log"
+	"net/url"
 	"os"
+	"strings"
 )
 
 type NotionSite struct {
@@ -50,11 +53,35 @@ func Run(ns *NotionSite) error {
 			return err
 		}
 	}
+	// fms, err = convertFolderPath(fms)
+	// if err != nil {
+	// 	return err
+	// }
 	fmsBytes, err := json.Marshal(fms)
 	if err != nil {
 		return err
 	}
 	return os.WriteFile(ns.files.HomePath+"/content/blogs.json", fmsBytes, 0644)
+}
+
+func convertFolderPath(fms []*FrontMatter) ([]*FrontMatter, error) {
+	for _, fm := range fms {
+		path := fm.Title.(string)
+		if fm.Slug.(string) != "" {
+			path = fm.Slug.(string)
+		}
+
+		// https://github.com/gohugoio/hugo/blob/master/helpers/url.go#L41
+		path = strings.ToLower(strings.ReplaceAll(path, " ", "-"))
+		parsedURI, err := url.Parse(path)
+		if err != nil {
+			return nil, err
+		}
+
+		// https://github.com/gohugoio/hugo/blob/master/helpers/path.go#L59
+		fm.FolderPath = paths.Sanitize(parsedURI.String())
+	}
+	return fms, nil
 }
 
 func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) (*FrontMatter, error) {
