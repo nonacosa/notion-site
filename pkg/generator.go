@@ -53,10 +53,10 @@ func Run(ns *NotionSite) error {
 			return err
 		}
 	}
-	// fms, err = convertFolderPath(fms)
-	// if err != nil {
-	// 	return err
-	// }
+	fms, err = convertFolderPath(fms)
+	if err != nil {
+		return err
+	}
 	fmsBytes, err := json.Marshal(fms)
 	if err != nil {
 		return err
@@ -66,9 +66,9 @@ func Run(ns *NotionSite) error {
 
 func convertFolderPath(fms []*FrontMatter) ([]*FrontMatter, error) {
 	for _, fm := range fms {
-		path := fm.Title.(string)
-		if fm.Slug.(string) != "" {
-			path = fm.Slug.(string)
+		path := fm.Title
+		if fm.Slug != "" {
+			path = fm.Slug
 		}
 
 		// https://github.com/gohugoio/hugo/blob/master/helpers/url.go#L41
@@ -79,7 +79,7 @@ func convertFolderPath(fms []*FrontMatter) ([]*FrontMatter, error) {
 		}
 
 		// https://github.com/gohugoio/hugo/blob/master/helpers/path.go#L59
-		fm.FolderPath = paths.Sanitize(parsedURI.String())
+		fm.AccessPath = paths.Sanitize(parsedURI.String())
 	}
 	return fms, nil
 }
@@ -124,11 +124,7 @@ func generate(ns *NotionSite, page notion.Page, blocks []notion.Block) (*FrontMa
 
 	//// todo how to support mention feature ???
 
-	fm, err := ns.tm.GenerateTo(ns)
-	if fm != nil {
-		fm.FolderPath = ns.files.FileFolderPath
-	}
-	return fm, err
+	return ns.tm.GenerateTo(ns)
 }
 
 func initNotionSite(ns *NotionSite, page notion.Page, blocks []notion.Block) {

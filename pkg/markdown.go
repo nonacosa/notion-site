@@ -70,28 +70,28 @@ type ToMarkdown struct {
 }
 
 type FrontMatter struct {
-	Title         any   `json:"title" yaml:",flow"`
-	Status        any   `json:"status" yaml:",flow"`
-	Position      any   `json:"position" yaml:",flow"`
-	Categories    []any `json:"categories" yaml:",flow"`
-	Tags          []any `json:"tags" yaml:",flow"`
-	Keywords      []any `json:"keywords" yaml:",flow"`
-	CreateAt      any   `json:"createAt" yaml:",flow"`
-	Author        any   `json:"author" yaml:",flow"`
-	Avatar        any   `json:"avatar" yaml:",flow"`
-	IsTranslated  any   `json:"isTranslated" yaml:",flow"`
-	Lastmod       any   `json:"lastMod" yaml:",flow"`
-	Description   any   `json:"description" yaml:",flow"`
-	Draft         any   `json:"draft" yaml:",flow"`
-	ExpiryDate    any   `json:"expiryDate" yaml:",flow"`
-	Show_comments any   `json:"showComments" yaml:",flow"`
-	Slug          any   `json:"slug" yaml:",flow"`
-	Image         any   `json:"image" yaml:",flow"`
-	Weight        any   `json:"weight" yaml:",flow"`
-	FolderPath    any   `json:"folderPath" yaml:",flow"`
+	Title        string   `json:"title"        yaml:"title,flow"`
+	Status       string   `json:"status"       yaml:"status,flow"`
+	Author       string   `json:"author"       yaml:"author,flow"`
+	Weight       int64    `json:"weight"       yaml:"weight,flow"`
+	LastMod      string   `json:"lastMod"      yaml:"lastMod,flow"`
+	CreateAt     string   `json:"createAt"     yaml:"createAt,flow"`
+	ExpiryDate   string   `json:"expiryDate"   yaml:"expiryDate,flow"`
+	Draft        bool     `json:"draft"        yaml:"draft,flow"`
+	IsTranslated bool     `json:"isTranslated" yaml:"isTranslated,flow"`
+	ShowComments bool     `json:"showComments" yaml:"showComments,flow"`
+	Tags         []string `json:"tags"         yaml:"tags,flow"`
+	Keywords     []string `json:"keywords"     yaml:"keywords,flow"`
+	Categories   []string `json:"categories"   yaml:"categories,flow"`
+	Slug         string   `json:"slug"         yaml:"slug,flow"`
+	Image        string   `json:"image"        yaml:"image,flow"`
+	Avatar       string   `json:"avatar"       yaml:"avatar,flow"`
+	Position     string   `json:"position"     yaml:"position,flow"`
+	AccessPath   string   `json:"accessPath"   yaml:"accessPath,flow"`
+	Description  string   `json:"description"  yaml:"description,flow"`
 	// Calculate Chinese word count accurately. Default is true
-	//IsCJKLanguage any `json:"isCJKLanguage" yaml:",flow"`
-	//PublishDate   any `json:"publishDate"   yaml:",flow"`
+	//IsCJKLanguage bool   `json:"isCJKLanguage" yaml:"isCJKLanguage,flow"`
+	//PublishDate   string `json:"publishDate"   yaml:"publishDate,flow"`
 }
 
 func New() *ToMarkdown {
