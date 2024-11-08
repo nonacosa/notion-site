@@ -70,25 +70,27 @@ type ToMarkdown struct {
 }
 
 type FrontMatter struct {
-	Title        string   `json:"title"        yaml:"title,flow"`
-	Status       string   `json:"status"       yaml:"status,flow"`
-	Author       string   `json:"author"       yaml:"author,flow"`
-	Weight       int64    `json:"weight"       yaml:"weight,flow"`
-	LastMod      string   `json:"lastMod"      yaml:"lastMod,flow"`
-	CreateAt     string   `json:"createAt"     yaml:"createAt,flow"`
-	ExpiryDate   string   `json:"expiryDate"   yaml:"expiryDate,flow"`
-	Draft        bool     `json:"draft"        yaml:"draft,flow"`
-	IsTranslated bool     `json:"isTranslated" yaml:"isTranslated,flow"`
-	ShowComments bool     `json:"showComments" yaml:"showComments,flow"`
-	Tags         []string `json:"tags"         yaml:"tags,flow"`
-	Keywords     []string `json:"keywords"     yaml:"keywords,flow"`
-	Categories   []string `json:"categories"   yaml:"categories,flow"`
-	Slug         string   `json:"slug"         yaml:"slug,flow"`
-	Image        string   `json:"image"        yaml:"image,flow"`
-	Avatar       string   `json:"avatar"       yaml:"avatar,flow"`
-	Position     string   `json:"position"     yaml:"position,flow"`
-	AccessPath   string   `json:"accessPath"   yaml:"accessPath,flow"`
-	Description  string   `json:"description"  yaml:"description,flow"`
+	Title           string   `json:"title"           yaml:"title,flow"`
+	Status          string   `json:"status"          yaml:"status,flow"`
+	Author          string   `json:"author"          yaml:"author,flow"`
+	Weight          int64    `json:"weight"          yaml:"weight,flow"`
+	LastMod         string   `json:"lastMod"         yaml:"lastMod,flow"`
+	CreateAt        string   `json:"createAt"        yaml:"createAt,flow"`
+	ExpiryDate      string   `json:"expiryDate"      yaml:"expiryDate,flow"`
+	Draft           bool     `json:"draft"           yaml:"draft,flow"`
+	IsTranslated    bool     `json:"isTranslated"    yaml:"isTranslated,flow"`
+	ShowComments    bool     `json:"showComments"    yaml:"showComments,flow"`
+	Tags            []string `json:"tags"            yaml:"tags,flow"`
+	Keywords        []string `json:"keywords"        yaml:"keywords,flow"`
+	Categories      []string `json:"categories"      yaml:"categories,flow"`
+	Slug            string   `json:"slug"            yaml:"slug,flow"`
+	Image           string   `json:"image"           yaml:"image,flow"`
+	Avatar          string   `json:"avatar"          yaml:"avatar,flow"`
+	Position        string   `json:"position"        yaml:"position,flow"`
+	AccessPath      string   `json:"accessPath"      yaml:"accessPath,flow"`
+	Description     string   `json:"description"     yaml:"description,flow"`
+	MetaTitle       string   `json:"metaTitle"       yaml:"metaTitle,flow"`
+	MetaDescription string   `json:"metaDescription" yaml:"metaDescription,flow"`
 	// Calculate Chinese word count accurately. Default is true
 	//IsCJKLanguage bool   `json:"isCJKLanguage" yaml:"isCJKLanguage,flow"`
 	//PublishDate   string `json:"publishDate"   yaml:"publishDate,flow"`
