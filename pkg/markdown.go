@@ -5,8 +5,8 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"github.com/Masterminds/sprig/v3"
 	"github.com/dstotijn/go-notion"
-	"github.com/go-sprout/sprout"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -281,7 +281,7 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 	if tm.NotionProps.IsSettingFile == true {
 		bType = "noop"
 	}
-	funcs := make(sprout.FunctionMap)
+	funcs := sprig.GenericFuncMap()
 	funcs["deref"] = func(i *bool) bool { return *i }
 	funcs["rich2md"] = ConvertRichText
 	funcs["table2md"] = ConvertTable
