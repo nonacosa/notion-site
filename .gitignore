@@ -5,6 +5,7 @@ tmp/
 build
 bin/
 web/
+.env
 .env.local
 .coverprofile
 config.yaml

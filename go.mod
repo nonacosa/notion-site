@@ -1,4 +1,4 @@
-module github.com/lanlin/notion-site
+module github.com/nonacosa/notion-site
 
 go 1.23
 

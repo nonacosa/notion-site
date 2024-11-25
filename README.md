@@ -1,8 +1,8 @@
 # notion-site
 
 
-[![](https://img.shields.io/github/v/release/lanlin/notion-site.svg)](https://github.com/lanlin/notion-site/releases)
-[![](https://img.shields.io/github/license/lanlin/notion-site.svg)](https://github.com/lanlin/notion-site/blob/master/LICENSE)
+[![](https://img.shields.io/github/v/release/nonacosa/notion-site.svg)](https://github.com/nonacosa/notion-site/releases)
+[![](https://img.shields.io/github/license/nonacosa/notion-site.svg)](https://github.com/nonacosa/notion-site/blob/master/LICENSE)
 
 **notion-site** is an open source software for a custom website based on [Notion](https://www.notion.so/) and [Hugo](https://gohugo.io/), and you can find your favorite template as your blog or documentation site among the hundreds of templates in the [Hugo Template Store](https://themes.gohugo.io/).
 
@@ -25,7 +25,7 @@
 ### Unix system install
 
 ```bash
-curl -sSf https://raw.githubusercontent.com/lanlin/notion-site/master/install.sh | sh
+curl -sSf https://raw.githubusercontent.com/nonacosa/notion-site/master/install.sh | sh
 ```
  
 
@@ -42,7 +42,7 @@ notion-site
 
 ### Github Action
 
-> The installation command tool is helpful for local debugging. If you do not want to debug locally, you can also copy the configuration file to your project and run it directly through GitHubAction. You can see the example config in [notion-site-doc](https://github.com/lanlin/notion-site-doc/blob/main/.github/workflows/builder.yml).
+> The installation command tool is helpful for local debugging. If you do not want to debug locally, you can also copy the configuration file to your project and run it directly through GitHubAction. You can see the example config in [notion-site-doc](https://github.com/nonacosa/notion-site-doc/blob/main/.github/workflows/builder.yml).
 
 To use it as a Github Action, you can use the template  of the repository
 in [.github/worflows/notion.yml](.github/workflows/notion.yml).

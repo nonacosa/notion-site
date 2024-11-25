@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/lanlin/notion-site/pkg"
+	"github.com/nonacosa/notion-site/pkg"
 
 	"github.com/spf13/cobra"
 )

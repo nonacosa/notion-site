@@ -18,7 +18,7 @@ Darwin*)
   ;;
 esac
 bin_dir="/usr/local/bin"
-url=$(curl -s https://api.github.com/repos/lanlin/notion-site/releases/latest | grep "browser_download_url.*${arch}.tar.gz\"" | cut -d : -f 2,3 | tr -d '\"[:space:]')
+url=$(curl -s https://api.github.com/repos/nonacosa/notion-site/releases/latest | grep "browser_download_url.*${arch}.tar.gz\"" | cut -d : -f 2,3 | tr -d '\"[:space:]')
 
 echo "${DARK}"
 echo "Configuration: [${arch}]"

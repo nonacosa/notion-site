@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/joho/godotenv"
-	"github.com/lanlin/notion-site/pkg"
+	"github.com/nonacosa/notion-site/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
