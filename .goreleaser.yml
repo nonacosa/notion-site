@@ -1,3 +1,4 @@
+version: "2"
 dist: ./build/release
 before:
   hooks:
