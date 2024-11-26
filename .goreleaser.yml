@@ -26,7 +26,7 @@ builds:
         goarch: arm64
 
 archives:
-  - name_template: "{{ .ProjectName }}-{{ .Os | toUpper }}-{{ .Arch }}"
+  - name_template: "{{ .ProjectName }}-{{ if eq .Os 'darwin' }}macos{{ else }}{{ .Os }}{{ end }}-{{ .Arch }}"
     format: tar.gz
     format_overrides:
       - goos: windows
