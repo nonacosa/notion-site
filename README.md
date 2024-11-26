@@ -6,10 +6,10 @@
 
 **notion-site** is an open source software for a custom website based on [Notion](https://www.notion.so/) and [Hugo](https://gohugo.io/), and you can find your favorite template as your blog or documentation site among the hundreds of templates in the [Hugo Template Store](https://themes.gohugo.io/).
 
-| Example | notion page |
-| --- | --- |
-| [doc](https://ns-doc.env.wtf) | [notion-page](https://zhuangwenda.notion.site/2bd00e5dfff3449ba81e0142f8af9bbb?v=065c41ad42be4683966e10f476e60afd) |
-| [blog](https://blog.env.wtf) | [notion-page](https://zhuangwenda.notion.site/df7fb0e4e0114268b973f9d3e9a39982?v=557485cf3f564002acbdfd97c17ceb6f) |
+| Example                         | notion page |
+|---------------------------------| --- |
+| [doc](https://notion.zhuang.me) | [notion-page](https://zhuangwenda.notion.site/2bd00e5dfff3449ba81e0142f8af9bbb?v=065c41ad42be4683966e10f476e60afd) |
+| [blog](https://blog-nonacosa.vercel.app/)    | [notion-page](https://zhuangwenda.notion.site/df7fb0e4e0114268b973f9d3e9a39982?v=557485cf3f564002acbdfd97c17ceb6f) |
 
  
 
