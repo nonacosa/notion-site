@@ -11,12 +11,15 @@ import (
 
 const Gist = "gist.github.com"
 const Twitter = "twitter.com"
+const X = "x.com"
 const Jsfiddle = "jsfiddle.net"
 const Bilibili = "bilibili.com"
 const RegexBili = `((?<=\.com\/video\/).*(?=\/))|((?<=bvid=).*(?=&cid?))`
 const RegexYoutube = `(?<=\.com\/watch\?v=).*`
-const RegexTwitterId = `(?<=status\/).*(?=\?)`
-const RegexTwitterUser = `(?<=com\/).*(?=\/status)`
+// match status id (digits) after /status/ until end, slash or question
+const RegexTwitterId = `(?<=status\/)[^\/\?]+`
+// match username between domain and /status
+const RegexTwitterUser = `(?<=com\/)[^\/]+(?=\/status)`
 const RegexJsfiddle = `(?<=jsfiddle\.net\/).*(?=\/)`
 
 func FindTextP(ori string, pre string) string {

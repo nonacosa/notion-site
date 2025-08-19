@@ -5,7 +5,7 @@
 {{"{{< bilibili "}}{{.Extra.Url}}{{" >}}"}}
 {{end}}
 {{- if eq .Extra.Plat "twitter"}}
-{{"{{< tweet id=\""}}{{.Extra.Url}}{{"\" user=\""}}{{.Extra.User}}{{"\" >}}"}}{{"\n"}}
+{{"{{< x user=\""}}{{.Extra.User}}{{"\" id=\""}}{{.Extra.Url}}{{"\" >}}"}}{{"\n"}}
 {{end}}
 {{- if eq .Extra.Plat "gist"}}
 {{"{{< gist "}}{{.Extra.Url}}{{" >}}"}}{{"\n"}}

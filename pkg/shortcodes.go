@@ -55,9 +55,11 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 			url = FindUrlContext(RegexJsfiddle, url)
 			plat = "Jsfiddle"
 		}
-		if strings.Contains(url, Twitter) {
+		if strings.Contains(url, Twitter) || strings.Contains(url, X) {
+			// support both twitter.com and x.com URL formats
 			user := FindUrlContext(RegexTwitterUser, url)
-			url = FindUrlContext(RegexTwitterId, url)
+			id := FindUrlContext(RegexTwitterId, url)
+			url = id
 			plat = "twitter"
 			(*extra)["User"] = user
 		}
@@ -259,4 +261,14 @@ func (tm *ToMarkdown) inject(mdb *MdBlock, blocks []notion.Block, index int) err
 		mdb.Block = block.(*notion.TableBlock)
 	}
 	return err
+}
+
+// ConvertTwitterExtraToX builds the Hugo x shortcode string from extra map
+func ConvertTwitterExtraToX(extra map[string]any) string {
+	user, _ := extra["User"].(string)
+	id, _ := extra["Url"].(string)
+	if user == "" || id == "" {
+		return ""
+	}
+	return fmt.Sprintf("{{< x user=\"%s\" id=\"%s\" >}}", user, id)
 }
