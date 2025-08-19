@@ -10,6 +10,7 @@
 |---------------------------------| --- |
 | [doc](https://notion.zhuang.me) | [notion-page](https://zhuangwenda.notion.site/2bd00e5dfff3449ba81e0142f8af9bbb?v=065c41ad42be4683966e10f476e60afd) |
 | [blog](https://blog-nonacosa.vercel.app/)    | [notion-page](https://zhuangwenda.notion.site/df7fb0e4e0114268b973f9d3e9a39982?v=557485cf3f564002acbdfd97c17ceb6f) |
+| [website](https://findsofun.com/)    | [notion-page](https://aware-voyage-fde.notion.site/2527eff93d7e804ba921e3c44a094cc2?v=2527eff93d7e81ef9b71000c116cb7e4&pvs=73) |
 
  
 
