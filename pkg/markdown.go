@@ -91,6 +91,10 @@ type FrontMatter struct {
 	Description     string   `json:"description"     yaml:"description,flow"`
 	MetaTitle       string   `json:"metaTitle"       yaml:"metaTitle,flow"`
 	MetaDescription string   `json:"metaDescription" yaml:"metaDescription,flow"`
+
+	// Support for custom URL and aliases from Notion properties
+	URL     string   `json:"url" yaml:"url,flow"`
+	Aliases []string `json:"aliases" yaml:"aliases,flow"`
 	// Calculate Chinese word count accurately. Default is true
 	//IsCJKLanguage bool   `json:"isCJKLanguage" yaml:"isCJKLanguage,flow"`
 	//PublishDate   string `json:"publishDate"   yaml:"publishDate,flow"`

@@ -184,6 +184,39 @@ func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePage
 	if fmv == nil {
 		return
 	}
+	// Special handling: map Notion properties named `url` and `aliases` to Hugo front matter types
+	lowerKey := strings.ToLower(key)
+	switch lowerKey {
+	case "url":
+		// ensure a plain string
+		switch v := fmv.(type) {
+		case string:
+			tm.FrontMatter[key] = v
+		default:
+			// try to stringify
+			tm.FrontMatter[key] = fmt.Sprintf("%v", v)
+		}
+		return
+	case "aliases":
+		// ensure []string
+		switch v := fmv.(type) {
+		case []string:
+			tm.FrontMatter[key] = v
+		case string:
+			tm.FrontMatter[key] = []string{v}
+		case []any:
+			// convert []any to []string
+			out := make([]string, 0, len(v))
+			for _, item := range v {
+				out = append(out, fmt.Sprintf("%v", item))
+			}
+			tm.FrontMatter[key] = out
+		default:
+			tm.FrontMatter[key] = []string{fmt.Sprintf("%v", v)}
+		}
+		return
+	}
+
 	// todo support settings mapping relation
 	tm.FrontMatter[key] = fmv
 }
