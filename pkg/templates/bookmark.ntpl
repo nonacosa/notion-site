@@ -1,4 +1,3 @@
-{{ `{{< bookmark image="`}}{{.Extra.Image}}{{ `" icon="`}}{{.Extra.Icon}}{{`" url="`}}{{.Extra.Url}}{{`" title="`}}{{.Extra.Title}}{{`" >}}`}}
-{{.Extra.Description}}
+{{ `{{< bookmark image="`}}{{.Extra.Image}}{{ `" icon="`}}{{.Extra.Icon}}{{`" url="`}}{{.Extra.Url}}{{`" title="`}}{{.Extra.Title}}{{`" description="`}}{{.Extra.Description}}{{`" >}}`}}
 {{ `{{< /bookmark >}}` }}
 
