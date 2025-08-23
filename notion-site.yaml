@@ -8,3 +8,30 @@ notion:
   publishedValue: Published
 markdown:
   homePath: ./
+
+# 动态属性配置 - 无需修改代码即可添加新的 Notion 属性
+dynamicProps:
+  - name: "Json"
+    type: "richtext"
+    outputType: "string"
+    defaultValue: ""
+  - name: "MetaTitle"
+    type: "richtext"
+    outputType: "string"
+    defaultValue: ""
+  - name: "MetaDescription"
+    type: "richtext"
+    outputType: "string"
+    defaultValue: ""
+  - name: "Priority"
+    type: "number"
+    outputType: "int"
+    defaultValue: 0
+  - name: "IsPublic"
+    type: "checkbox"
+    outputType: "bool"
+    defaultValue: false
+  - name: "ExternalLinks"
+    type: "multiselect"
+    outputType: "[]string"
+    defaultValue: []

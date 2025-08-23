@@ -24,9 +24,18 @@ type Markdown struct {
 	Template     string `yaml:"template,omitempty"`
 }
 
+// 动态属性配置结构
+type PropDef struct {
+	Name         string      `yaml:"name"`
+	Type         string      `yaml:"type"`
+	OutputType   string      `yaml:"outputType"`
+	DefaultValue interface{} `yaml:"defaultValue"`
+}
+
 type Config struct {
-	Notion   `yaml:"notion"`
-	Markdown `yaml:"markdown"`
+	Notion       `yaml:"notion"`
+	Markdown     `yaml:"markdown"`
+	DynamicProps []PropDef `yaml:"dynamicProps,omitempty"`
 }
 
 func DefaultConfigInit() error {

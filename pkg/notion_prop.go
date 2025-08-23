@@ -2,7 +2,11 @@ package pkg
 
 import (
 	"github.com/dstotijn/go-notion"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
+	"log"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -85,7 +89,11 @@ type NotionProp struct {
 	Types            string
 	IsSettingFile    bool
 	IsCustomNameFile bool
+	DynamicProps     map[string]interface{} `json:"dynamicProps,omitempty"`
 }
+
+// 全局配置缓存（懒加载）
+var globalConfig *Config
 
 func NewNotionProp(page notion.Page) (np *NotionProp) {
 	np = &NotionProp{
@@ -113,6 +121,9 @@ func NewNotionProp(page notion.Page) (np *NotionProp) {
 	}
 	np.IsSettingFile = np.IsSetting()
 	np.IsCustomNameFile = np.IsCustomNameMdFile()
+
+	// 处理动态属性（鲁棒性：配置不存在时不影响程序运行）
+	np.processDynamicProps(page)
 
 	return
 }
@@ -244,4 +255,111 @@ func (np *NotionProp) getChildrenBlocks(block *MdBlock) {
 	case reflect.TypeOf(&notion.TemplateBlock{}):
 		block.children = block.Block.(*notion.TemplateBlock).Children
 	}
+}
+
+// 加载主配置文件（懒加载，鲁棒性处理）
+func loadGlobalConfig() *Config {
+	if globalConfig != nil {
+		return globalConfig
+	}
+
+	// 尝试从配置文件加载
+	configPath := "notion-site.yaml"
+	if data, err := ioutil.ReadFile(configPath); err == nil {
+		var config Config
+		if err := yaml.Unmarshal(data, &config); err == nil {
+			globalConfig = &config
+			if len(config.DynamicProps) > 0 {
+				log.Printf("已加载动态属性配置: %s (%d个属性)", configPath, len(config.DynamicProps))
+			}
+			return globalConfig
+		} else {
+			log.Printf("解析配置文件失败: %s - %v", configPath, err)
+		}
+	}
+
+	// 配置文件不存在或解析失败时，创建空配置确保程序正常运行
+	globalConfig = &Config{DynamicProps: []PropDef{}}
+	return globalConfig
+}
+
+// 处理动态属性
+func (np *NotionProp) processDynamicProps(page notion.Page) {
+	config := loadGlobalConfig()
+	
+	if len(config.DynamicProps) == 0 {
+		// 没有动态属性配置，直接返回
+		return
+	}
+
+	np.DynamicProps = make(map[string]interface{})
+	
+	for _, propDef := range config.DynamicProps {
+		value := getDynamicPropValue(page, propDef)
+		if value != nil || (propDef.DefaultValue != nil && propDef.DefaultValue != "") {
+			// 使用小写键名以符合yaml约定
+			key := strings.ToLower(propDef.Name)
+			if value != nil {
+				np.DynamicProps[key] = value
+			} else {
+				np.DynamicProps[key] = propDef.DefaultValue
+			}
+		}
+	}
+}
+
+// 获取动态属性值
+func getDynamicPropValue(page notion.Page, propDef PropDef) interface{} {
+	defer func() {
+		// 防止panic，确保程序鲁棒性
+		if r := recover(); r != nil {
+			log.Printf("获取属性 %s 时出错: %v", propDef.Name, r)
+		}
+	}()
+
+	prop := getPropValue(page, propDef.Name)
+	
+	switch strings.ToLower(propDef.Type) {
+	case "richtext":
+		if prop.RichText != nil && len(prop.RichText) > 0 {
+			return ConvertRichText(prop.RichText)
+		}
+	case "select":
+		if prop.Select != nil {
+			return prop.Select.Name
+		}
+	case "multiselect":
+		if prop.MultiSelect != nil && len(prop.MultiSelect) > 0 {
+			var result []string
+			for _, sel := range prop.MultiSelect {
+				result = append(result, sel.Name)
+			}
+			return result
+		}
+	case "number":
+		if prop.Number != nil {
+			return *prop.Number
+		}
+	case "checkbox":
+		if prop.Checkbox != nil {
+			return *prop.Checkbox
+		}
+	case "date":
+		if prop.Date != nil {
+			return prop.Date.Start.Time
+		}
+	case "title":
+		if prop.Title != nil && len(prop.Title) > 0 {
+			return ConvertRichText(prop.Title)
+		}
+	default:
+		// 未知类型，尝试转换为字符串
+		if prop.RichText != nil && len(prop.RichText) > 0 {
+			return ConvertRichText(prop.RichText)
+		} else if prop.Title != nil && len(prop.Title) > 0 {
+			return ConvertRichText(prop.Title)
+		}
+	}
+	
+	return nil
 }

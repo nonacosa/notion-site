@@ -9,6 +9,22 @@ import (
 	"time"
 )
 
+// escapeQuotes 转义字符串中的双引号，用于 shortcode 参数
+func escapeQuotes(s string) string {
+	// 转义双引号和反斜杠
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "\"", "\\\"")
+	// 移除或替换可能导致问题的特殊字符
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	s = strings.ReplaceAll(s, "\t", " ")
+	// 清理多余的空格
+	for strings.Contains(s, "  ") {
+		s = strings.ReplaceAll(s, "  ", " ")
+	}
+	return strings.TrimSpace(s)
+}
+
 // injectBookmarkInfo set bookmark info into the extra map field
 func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *map[string]any) error {
 	og, err := opengraph.Fetch(bookmark.URL)
@@ -23,8 +39,8 @@ func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *
 		}
 	}
 	(*extra)["Url"] = og.URL
-	(*extra)["Title"] = og.Title
-	(*extra)["Description"] = og.Description
+	(*extra)["Title"] = escapeQuotes(og.Title)
+	(*extra)["Description"] = escapeQuotes(og.Description)
 	(*extra)["Icon"] = og.Favicon
 	return nil
 }
@@ -117,7 +133,7 @@ func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map
 		text += richText.Text.Content
 	}
 	(*extra)["Emoji"] = callout.Icon.Emoji
-	(*extra)["Text"] = text
+	(*extra)["Text"] = escapeQuotes(text)
 	return nil
 }
 

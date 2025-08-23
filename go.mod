@@ -5,11 +5,11 @@ go 1.23
 toolchain go1.23.1
 
 require (
+	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/briandowns/spinner v1.23.1
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/dstotijn/go-notion v0.11.0
-	github.com/go-sprout/sprout v0.6.0
 	github.com/gohugoio/hugo v0.135.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c
@@ -23,7 +23,6 @@ require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
-	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect

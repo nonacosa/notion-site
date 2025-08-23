@@ -190,7 +190,30 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) (*FrontMatter, error) {
 	fm.IsTranslated = true
 	// chinese character statistics
 	//fm.IsCJKLanguage = true
-	frontMatters, err := yaml.Marshal(fm)
+	
+	// 合并动态属性到 FrontMatter
+	dynamicFrontMatter := make(map[string]interface{})
+	
+	// 首先编码现有的结构化 FrontMatter
+	fmBytes, err := yaml.Marshal(fm)
+	if err != nil {
+		return fm, err
+	}
+	
+	// 将结构化数据解析到 map 中
+	if err := yaml.Unmarshal(fmBytes, &dynamicFrontMatter); err != nil {
+		return fm, err
+	}
+	
+	// 添加动态属性
+	if tm.NotionProps.DynamicProps != nil {
+		for key, value := range tm.NotionProps.DynamicProps {
+			dynamicFrontMatter[key] = value
+		}
+	}
+	
+	// 重新编码完整的 FrontMatter
+	frontMatters, err := yaml.Marshal(dynamicFrontMatter)
 
 	if err != nil {
 		return fm, nil
