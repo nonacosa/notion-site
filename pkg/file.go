@@ -98,20 +98,34 @@ func (ns *NotionSite) getFilename() string {
 func (ns *NotionSite) SetFileInfo(position string) {
 	ns.files.Position = position
 	if ns.currentPageProp.IsSettingFile {
+		// setting 类型：平铺模式 - 直接放在 position 目录下
 		ns.files.FileName = ns.getFilename()
 		ns.files.FileFolderPath = filepath.Join(ns.config.HomePath, ns.files.Position)
 		ns.files.FilePath = filepath.Join(ns.files.FileFolderPath, ns.files.FileName)
-	} else if ns.currentPageProp.IsCustomNameFile {
-		ns.files.FileName = ns.getFilename()
-		ns.files.MediaPath = filepath.Join(ns.config.HomePath, ns.files.Position, mediaRelativePath)
-		ns.files.FileFolderPath = filepath.Join(ns.config.HomePath, ns.files.Position)
-		ns.files.FilePath = filepath.Join(ns.config.HomePath, ns.files.Position, ns.files.FileName)
 	} else {
-		ns.files.FileName = filepath.Join(ns.getArticleFolderPath(), defaultMarkdownName)
-		ns.files.MediaPath = filepath.Join(ns.config.HomePath, ns.files.Position, ns.getArticleFolderPath(), mediaRelativePath)
-		ns.files.FileFolderPath = filepath.Join(ns.config.HomePath, ns.files.Position, ns.getArticleFolderPath())
-		ns.files.FilePath = filepath.Join(ns.files.FileFolderPath, defaultMarkdownName)
+		// 非 setting 类型：都使用 bundle 模式 - 创建文件夹
+		articleFolderPath := ns.getArticleFolderPath()
+		
+		if ns.currentPageProp.IsCustomNameFile {
+			// 有自定义文件名的情况：放在 bundle 文件夹中，使用自定义名称
+			ns.files.FileName = filepath.Join(articleFolderPath, ns.getFilename())
+		} else {
+			// 默认情况：使用 index.md
+			ns.files.FileName = filepath.Join(articleFolderPath, defaultMarkdownName)
+		}
+		
+		ns.files.MediaPath = filepath.Join(ns.config.HomePath, ns.files.Position, articleFolderPath, mediaRelativePath)
+		ns.files.FileFolderPath = filepath.Join(ns.config.HomePath, ns.files.Position, articleFolderPath)
+		ns.files.FilePath = filepath.Join(ns.files.FileFolderPath, ns.getActualFileName())
 	}
+}
+
+// 获取实际的文件名（不包含路径）
+func (ns *NotionSite) getActualFileName() string {
+	if ns.currentPageProp.IsCustomNameFile {
+		return ns.getFilename()
+	}
+	return defaultMarkdownName
 }
 
 func (files *Files) DownloadMedia(dynamicMedia any) error {

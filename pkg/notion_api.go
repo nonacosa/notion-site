@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"fmt"
 	"github.com/briandowns/spinner"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/dstotijn/go-notion"
@@ -70,11 +71,41 @@ func (api *NotionAPI) queryDatabase(client *notion.Client, config Notion, id str
 	spin.Suffix = " Querying Notion database..."
 	spin.Start()
 	defer spin.Stop()
+	
 	query := &notion.DatabaseQuery{
 		Filter:   api.filterFromConfig(config),
 		PageSize: 100,
 	}
-	return client.QueryDatabase(context.Background(), id, query)
+	
+	// 执行请求
+	response, err := client.QueryDatabase(context.Background(), id, query)
+	
+	if err != nil {
+		fmt.Printf("❌ Error querying database %s: %v\n", id, err)
+		return response, err
+	}
+	
+	// 只在有符合条件的结果时显示详细信息
+	if len(response.Results) > 0 {
+		fmt.Printf("🔍 Database %s: Found %d matching pages\n", id[:8]+"...", len(response.Results))
+		for i, page := range response.Results {
+			if props, ok := page.Properties.(notion.DatabasePageProperties); ok {
+				var title, status string = "Unknown", "Unknown"
+				
+				if titleProp, exists := props["Name"]; exists && titleProp.Title != nil {
+					title = ConvertRichText(titleProp.Title)
+				}
+				
+				if statusProp, exists := props[config.FilterProp]; exists && statusProp.Select != nil {
+					status = statusProp.Select.Name
+				}
+				
+				fmt.Printf("  📄 [%d] %s (Status: %s)\n", i+1, title, status)
+			}
+		}
+	}
+	
+	return response, err
 }
 
 func (api *NotionAPI) queryBlockChildren(client *notion.Client, blockID string) (blocks []notion.Block, err error) {
