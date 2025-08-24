@@ -66,18 +66,27 @@ func (files *Files) mkdirPath(path string) error {
 }
 
 func (ns *NotionSite) getArticleFolderPath() string {
-	escapedTitle := strings.ReplaceAll(
-		strings.ToValidUTF8(
-			strings.ToLower(strings.TrimSpace(ns.currentPageProp.Name)),
-			"",
-		),
-		" ", "-",
-	)
+	// 优先使用 slug 作为文件夹名，这样国际化内容可以在同一个文件夹内
+	var folderName string
+	if ns.currentPageProp.Slug != "" {
+		// 使用 slug（已经是 URL 友好的格式）
+		folderName = strings.TrimSpace(ns.currentPageProp.Slug)
+	} else {
+		// 回退到使用标题，并进行 URL 友好化处理
+		folderName = strings.ReplaceAll(
+			strings.ToValidUTF8(
+				strings.ToLower(strings.TrimSpace(ns.currentPageProp.Name)),
+				"",
+			),
+			" ", "-",
+		)
+	}
+	
 	if ns.config.GroupByMonth {
-		return filepath.Join(ns.currentPageProp.CreateAt.Format(time.DateOnly), escapedTitle)
+		return filepath.Join(ns.currentPageProp.CreateAt.Format(time.DateOnly), folderName)
 	}
 
-	return escapedTitle
+	return folderName
 }
 
 func (ns *NotionSite) getFilename() string {
